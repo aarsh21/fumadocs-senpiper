@@ -11,13 +11,16 @@ WORKDIR /app
 # Install dependencies with bun
 FROM base AS deps
 COPY package.json bun.lock* ./
-RUN bun install --no-save --frozen-lockfile
+# Skip postinstall (fumadocs-mdx needs source.config.ts which isn't copied yet)
+RUN bun install --no-save --frozen-lockfile --ignore-scripts
 
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Run postinstall now that source files are available
+RUN bun run postinstall
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
