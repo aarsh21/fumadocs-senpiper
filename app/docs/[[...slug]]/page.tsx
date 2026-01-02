@@ -12,7 +12,7 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   if (!page) notFound();
 
   const MDX = page.data.body;
-  const markdownUrl = `${page.url}.mdx`;
+  const markdownUrl = `/api/mdx/${page.slugs.join('/')}`;
   const githubUrl = `https://github.com/AarshGT/fuma-docs-senpiper/blob/main/content/docs/${page.slugs.join('/')}.mdx`;
 
   return (
