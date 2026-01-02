@@ -1,0 +1,10 @@
+{
+  "title": "Recipes",
+  "pages": [
+    "cascading-dropdown",
+    "calculated-field",
+    "conditional-visibility",
+    "repeating-sections",
+    "auto-generated-ids"
+  ]
+}

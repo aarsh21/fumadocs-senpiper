@@ -1,0 +1,231 @@
+# label
+
+## Purpose
+
+Non-interactive display text for headings, instructions, warnings, and read-only information.
+
+---
+
+## Configuration
+
+**Data Type:** `type: "string"`
+
+**Description:** `description: "label"`
+
+---
+
+## Consumed Properties
+
+### Standard Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `title` | string | Label text |
+| `hint` | string | Additional text |
+| `accessMatrix` | object | Visibility, default value |
+| `predicates` | array | Conditional logic |
+| `localisationMap` | object | Translations |
+
+### Display Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `layout` | string | Visual variant |
+| `inlineHint` | boolean | Show hint inline |
+| `renderAsMd` | boolean | Render as Markdown |
+| `titleDisplayConfiguration` | object | Styling configuration |
+
+---
+
+## Layout Variants
+
+| Value | Appearance | Use Case |
+|-------|------------|----------|
+| `h1` | Large heading | Page title |
+| `h2` | Medium heading | Section header |
+| `h3` | Small heading | Sub-section |
+| (none) | Body text | Instructions |
+| `info` | Info callout (blue) | Tips, notes |
+| `warn` | Warning callout (yellow) | Cautions |
+| `error` | Error callout (red) | Critical warnings |
+| `mediaOnly` | Display media only | Images without text |
+
+---
+
+## Answer Structure
+
+Labels typically don't have user input. The "answer" is usually the static content:
+
+```json
+{
+  "welcomeMessage": "Welcome to the survey!"
+}
+```
+
+Or may be empty if just using `title`:
+```json
+{
+  "headerLabel": null
+}
+```
+
+---
+
+## Examples
+
+### Page Header
+```json
+{
+  "pageTitle": {
+    "title": "Customer Registration Form",
+    "type": "string",
+    "description": "label",
+    "layout": "h1"
+  }
+}
+```
+
+### Section Header
+```json
+{
+  "sectionHeader": {
+    "title": "Personal Information",
+    "type": "string",
+    "description": "label",
+    "layout": "h2"
+  }
+}
+```
+
+### Instructions
+```json
+{
+  "instructions": {
+    "title": "Please fill all fields marked with *",
+    "type": "string",
+    "description": "label"
+  }
+}
+```
+
+### Info Callout
+```json
+{
+  "infoNote": {
+    "title": "Your data is secure and will not be shared.",
+    "type": "string",
+    "description": "label",
+    "layout": "info"
+  }
+}
+```
+
+### Warning Callout
+```json
+{
+  "warningNote": {
+    "title": "Please save your work before proceeding.",
+    "type": "string",
+    "description": "label",
+    "layout": "warn"
+  }
+}
+```
+
+### Error/Critical Message
+```json
+{
+  "criticalNote": {
+    "title": "This action cannot be undone!",
+    "type": "string",
+    "description": "label",
+    "layout": "error"
+  }
+}
+```
+
+### Static Content via Default Value
+```json
+{
+  "disclaimer": {
+    "title": "Disclaimer",
+    "type": "string",
+    "description": "label",
+    "accessMatrix": {
+      "answer": "By submitting this form, you agree to our terms and conditions. All information provided must be accurate and complete."
+    }
+  }
+}
+```
+
+### Conditional Label
+```json
+{
+  "approvalMessage": {
+    "title": "Approved",
+    "type": "string",
+    "description": "label",
+    "layout": "info",
+    "accessMatrix": {
+      "visibility": "GONE"
+    },
+    "predicates": [{
+      "condition": "this.status == 'Approved'",
+      "action": "APPLY_ACCESS_MATRIX",
+      "actionConfig": {
+        "accessMatrix": { "visibility": "VISIBLE" }
+      }
+    }]
+  }
+}
+```
+
+### Markdown Content
+```json
+{
+  "markdownLabel": {
+    "title": "Instructions",
+    "type": "string",
+    "description": "label",
+    "renderAsMd": true,
+    "accessMatrix": {
+      "answer": "## Steps\n1. Fill the form\n2. Review your answers\n3. Click **Submit**"
+    }
+  }
+}
+```
+
+---
+
+## Behavior Notes
+
+1. **Non-editable** - Labels don't accept user input
+2. **Dynamic content** - Use predicates to show/hide or change text
+3. **Styling** - Use layout variants for visual hierarchy
+4. **Long text** - Use `accessMatrix.answer` for multi-line content
+5. **Markdown** - Enable `renderAsMd` for formatted text
+
+---
+
+## Use Cases
+
+| Scenario | Layout |
+|----------|--------|
+| Page title | `h1` |
+| Section divider | `h2` |
+| Help text | (none) |
+| Tips | `info` |
+| Warnings | `warn` |
+| Errors | `error` |
+| Terms & conditions | (none) with long answer |
+
+---
+
+## Platform Differences
+
+> **Team: Please document any platform-specific behaviors**
+
+| Platform | Behavior |
+|----------|----------|
+| Android | ? |
+| iOS | ? |
+| Web | ? |
+

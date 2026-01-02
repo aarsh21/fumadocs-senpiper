@@ -1,0 +1,2462 @@
+---
+title: "Schema Properties Reference"
+description: "Complete Reference** for all SchemaProperty properties in the Form Schema DSL.  "
+---
+
+
+> **Complete Reference** for all SchemaProperty properties in the Form Schema DSL.  
+> Last updated from `SchemaProperty.java` - 130+ properties documented.
+
+This document is organized into:
+1. [Property Index](#property-index) - Alphabetical quick lookup
+2. [Universal Properties](#part-1-universal-properties) - Apply to all field types
+3. [Field-Specific Properties](#part-2-field-specific-properties) - Only for certain types
+4. [Form-Level Properties](#part-3-form-level-properties) - On FormSchema, not fields
+5. [Nested Objects Reference](#part-4-nested-objects) - Complex object structures
+
+---
+
+## Property Index
+
+Quick alphabetical lookup of all properties with links and categories.
+
+| Property | Category | Type | See Also |
+|----------|----------|------|----------|
+| [`accessMatrix`](#accessmatrix) | Access Control | AccessMatrix | [Visibility & Access](concepts/visibility-access) |
+| [`allowBypassOfMasterListPopulation`](#allowbypassofmasterlistpopulation) | Master Data | boolean | [Master Data](concepts/master-data) |
+| [`allowPagination`](#allowpagination) | Section/Array | boolean | |
+| [`allowWildcardSelect`](#allowwildcardselect) | Selection | boolean | |
+| [`autoGenerate`](#autogenerate) | Auto-Generation | boolean | [Auto-Generated IDs](recipes/auto-generated-ids) |
+| [`autoGenerateConfig`](#autogenerateconfig) | Auto-Generation | object | [Auto-Generated IDs](recipes/auto-generated-ids) |
+| [`autoPopulateDependentKeys`](#autopopulatedependentkeys) | Master Data | boolean | |
+| [`bypassValidationIfInvalid`](#bypassvalidationifinvalid) | Validation | boolean | |
+| [`cameraHint`](#camerahint) | Appearance | string | [Field Appearance](concepts/field-appearance) |
+| [`captureIpAddress`](#captureipaddress) | System | boolean | |
+| [`caseIdentifierKey`](#caseidentifierkey) | Identity | string | |
+| [`clonedFieldKey`](#clonedfieldkey) | Identity | string | |
+| [`columnKey`](#columnkey) | Master Data | string | [Master Data](concepts/master-data) |
+| [`columnName`](#columnname) | Master Data | string | [Master Data](concepts/master-data) |
+| [`comparatorType`](#comparatortype) | Validation | Operator | |
+| [`companyMasterId`](#companymasterid) | User Profile | UUID | |
+| [`customWebFormLayouts`](#customwebformlayouts) | Web | object[] | |
+| [`dateOnly`](#dateonly) | DateTime | boolean | |
+| [`defaultExpandedCount`](#defaultexpandedcount) | Section/Array | integer | |
+| [`dependentKeys`](#dependentkeys) | Conditional Logic | string[] | [Conditional Logic](concepts/conditional-logic) |
+| [`dependentResponseConfigurations`](#dependentresponseconfigurations) | Conditional Logic | Map | |
+| [`description`](#description) | Identity | string | [Field Types](concepts/field-types) |
+| [`disableAccessMatrixInBulkUpload`](#disableaccessmatrixinbulkupload) | Bulk Upload | boolean | |
+| [`disableFilepicker`](#disablefilepicker) | Multimedia | boolean | |
+| [`disableManualEntry`](#disablemanualentry) | Selection | boolean | |
+| [`disableMasterDataForGroupMembershipSetting`](#disablemasterdataforgroupmembershipsetting) | Group Member | boolean | |
+| [`disableOfflineMaster`](#disableofflinemaster) | Master Data | boolean | [Master Data](concepts/master-data) |
+| [`editable`](#editable) | Location | boolean | |
+| [`embedImageMetadata`](#embedimagemetadata) | Multimedia | boolean | |
+| [`enableClientSideValidateButton`](#enableclientsidevalidatebutton) | Validation | boolean | |
+| [`enableEventScheduling`](#enableeventscheduling) | DateTime | boolean | |
+| [`enableGeoTagging`](#enablegeotagging) | Multimedia | boolean | |
+| [`enableOfflineOptionFilterMaster`](#enableofflineoptionfiltermaster) | Master Data | boolean | [Master Data](concepts/master-data) |
+| [`enableOnlineMaster`](#enableonlinemaster) | Master Data | boolean | [Master Data](concepts/master-data) |
+| [`enableOnlineSearchableMaster`](#enableonlinesearchablemaster) | Master Data | boolean | [Master Data](concepts/master-data) |
+| [`enableViewModeWebLayout`](#enableviewmodeweblayout) | Web | boolean | |
+| [`enableWebLayout`](#enableweblayout) | Web | boolean | |
+| [`enforceCameraFlash`](#enforcecameraflash) | Multimedia | boolean | |
+| [`enum`](#enum) | Selection | string[] | |
+| [`enumListLocalisationMap`](#enumlistlocalisationmap) | Localization | Map | [Localization](concepts/localization) |
+| [`excludedFieldsForCopiedRow`](#excludedfieldsforcopiedrow) | Section/Array | string[] | |
+| [`externalEntityVerificationConfigs`](#externalentityverificationconfigs) | External | object[] | |
+| [`externalMasterDetail`](#externalmasterdetail) | Master Data | object | |
+| [`fillModeConfiguration`](#fillmodeconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance) |
+| [`filterOnConditionPojo`](#filteronconditionpojo) | Master Data | boolean | |
+| [`filterString`](#filterstring) | Master Data | string | [Master Data](concepts/master-data) |
+| [`filterStringCondition`](#filterstringcondition) | Master Data | ConditionPojo | |
+| [`filterStringConditionJson`](#filterstringconditionjson) | Master Data | string | |
+| [`filterStringConditionTreeFormat`](#filterstringconditiontreeformat) | Master Data | string | |
+| [`filterStringExpression`](#filterstringexpression) | Master Data | string | |
+| [`fontCase`](#fontcase) | Master Data | string | |
+| [`format`](#format) | Display | string | [Field Appearance](concepts/field-appearance) |
+| [`formDisplayConfiguration`](#formdisplayconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance) |
+| [`formulaKeys`](#formulakeys) | Conditional Logic | string[] | [Conditional Logic](concepts/conditional-logic) |
+| [`formReportConfiguration`](#formreportconfiguration) | Reports | object | |
+| [`generateSystemTimeAtServer`](#generatesystemtimeatserver) | DateTime | boolean | |
+| [`geocodeDataMapping`](#geocodedatamapping) | Location | Map | |
+| [`groupId`](#groupid) | Master Data | UUID | [Master Data](concepts/master-data) |
+| [`hideAddNewRowButton`](#hideaddnewrowbutton) | Section/Array | boolean | |
+| [`hideSearchIcon`](#hidesearchicon) | Selection | boolean | |
+| [`hideSyncMasterStrip`](#hidesyncmasterstrip) | Web | boolean | |
+| [`hint`](#hint) | Appearance | string | [Field Appearance](concepts/field-appearance) |
+| [`hypervergeIntegrationConfig`](#hypervergeintegrationconfig) | External | object | |
+| [`imageObjectDetectionConfigs`](#imageobjectdetectionconfigs) | Object Detection | object[] | |
+| [`immutableRowCount`](#immutablerowcount) | Section/Array | boolean | |
+| [`inlineHint`](#inlinehint) | Appearance | boolean | [Field Appearance](concepts/field-appearance) |
+| [`items`](#items) | Structure | SchemaProperty | |
+| [`keysForRowHeader`](#keysforrowheader) | Section/Array | string[] | |
+| [`layout`](#layout) | Appearance | string | [Field Appearance](concepts/field-appearance) |
+| [`localisationMap`](#localisationmap) | Localization | Map | [Localization](concepts/localization) |
+| [`locationFieldConfig`](#locationfieldconfig) | Location | object | |
+| [`locationMandatory`](#locationmandatory) | Location | boolean | |
+| [`masterCombinationKeys`](#mastercombinationkeys) | Master Data | string[] | |
+| [`masterConfiguration`](#masterconfiguration) | Master Data | object | |
+| [`masterFilterConfig`](#masterfilterconfig) | Master Data | Map | |
+| [`masterId`](#masterid) | Master Data | UUID | [Master Data](concepts/master-data) |
+| [`masterName`](#mastername) | Master Data | string | [Master Data](concepts/master-data) |
+| [`masterPreviewFields`](#masterpreviewfields) | Master Data | string[] | [Master Data](concepts/master-data) |
+| [`masterType`](#mastertype) | Master Data | string | [Master Data](concepts/master-data) |
+| [`maximum`](#maximum) | Validation | number | |
+| [`maxRows`](#maxrows) | Validation | integer | |
+| [`maxSize`](#maxsize) | Validation | integer | |
+| [`mdEnumListLocalisationMap`](#mdenumlocalisation) | Localization | Map | |
+| [`mediaInfoMetaDataFields`](#mediainfometadatafields) | Multimedia | string[] | |
+| [`minimum`](#minimum) | Validation | number | |
+| [`minRows`](#minrows) | Validation | integer | |
+| [`minSize`](#minsize) | Validation | integer | |
+| [`multimediaConfig`](#multimediaconfig) | Multimedia | object | |
+| [`multimediaType`](#multimediatype) | Multimedia | string | |
+| [`newRowLabel`](#newrowlabel) | Section/Array | string | |
+| [`operator`](#operator) | Validation | string | |
+| [`order`](#order) | Structure | string[] | |
+| [`otpConfig`](#otpconfig) | Verification | object | |
+| [`otpValidation`](#otpvalidation) | Verification | string | |
+| [`overwriteMasterDataInServer`](#overwritemasterdatainserver) | Master Data | boolean | |
+| [`pattern`](#pattern) | Validation | string | |
+| [`period`](#period) | DateTime | string | |
+| [`pickManually`](#pickmanually) | Location | boolean | |
+| [`placeholder`](#placeholder) | Appearance | string | [Field Appearance](concepts/field-appearance) |
+| [`populateMasterDataInServer`](#populatemasterdatainserver) | Master Data | boolean | |
+| [`predicates`](#predicates) | Conditional Logic | Predicate[] | [Conditional Logic](concepts/conditional-logic) |
+| [`prefilledDataMappingKey`](#prefilleddatamappingkey) | Master Data | string | |
+| [`prefixText`](#prefixtext) | Appearance | string | [Field Appearance](concepts/field-appearance) |
+| [`previewFields`](#previewfields) | Display | string[] | |
+| [`primaryKeys`](#primarykeys) | Identity | string[] | |
+| [`properties`](#properties) | Structure | Map | |
+| [`qrConfig`](#qrconfig) | QR/Barcode | object | |
+| [`remoteValidation`](#remotevalidation) | Validation | boolean | |
+| [`remoteValidations`](#remotevalidations) | Validation | object[] | |
+| [`renderAsMd`](#renderasmd) | Appearance | boolean | [Field Appearance](concepts/field-appearance) |
+| [`required`](#required) | Structure | string[] | |
+| [`rowHeaderDisplayConfiguration`](#rowheaderdisplayconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance) |
+| [`scanDisplayValueForBarCode`](#scandisplayvalueforbarcode) | QR/Barcode | boolean | |
+| [`scoringConfigs`](#scoringconfigs) | Scoring | Map | |
+| [`searchableKeys`](#searchablekeys) | Master Data | string[] | [Master Data](concepts/master-data) |
+| [`searchQueryConfiguration`](#searchqueryconfiguration) | Search | object | |
+| [`sectionArrayConfiguration`](#sectionarrayconfiguration) | Section/Array | object | |
+| [`selectAllButtonText`](#selectallbuttontext) | Selection | string | |
+| [`separatedInputConfiguration`](#separatedinputconfiguration) | Separated Input | object[] | |
+| [`shouldNotAutoDismissCameraView`](#shouldnotautodismisscameraview) | Multimedia | boolean | |
+| [`showGeoCoordinates`](#showgeocoordinates) | Location/Multimedia | boolean | |
+| [`showUrlInExcel`](#showurlinexcel) | Reports | boolean | |
+| [`sortConfig`](#sortconfig) | Display | object | |
+| [`sortOptions`](#sortoptions) | Selection | boolean | |
+| [`sqlTitle`](#sqltitle) | Database | string | |
+| [`suffixText`](#suffixtext) | Appearance | string | [Field Appearance](concepts/field-appearance) |
+| [`systemTime`](#systemtime) | DateTime | boolean | |
+| [`timeDelta`](#timedelta) | DateTime | integer | |
+| [`timeOnly`](#timeonly) | DateTime | boolean | |
+| [`timeUnit`](#timeunit) | DateTime | string | |
+| [`title`](#title) | Identity | string | |
+| [`titleDisplayConfiguration`](#titledisplayconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance) |
+| [`type`](#type) | Identity | string | [Field Types](concepts/field-types) |
+| [`uri`](#uri) | External | string | |
+| [`useLastValue`](#uselastvalue) | Section/Array | boolean | |
+| [`userProfileDriven`](#userprofiledriven) | User Profile | boolean | |
+| [`userProfileKey`](#userprofilekey) | User Profile | string | |
+| [`validateAgainstMasters`](#validateagainstmasters) | Master Data | boolean | |
+| [`validationMessage`](#validationmessage) | Validation | string | |
+| [`viewModeConfiguration`](#viewmodeconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance) |
+| [`webLayout`](#weblayout) | Appearance | string | [Field Appearance](concepts/field-appearance) |
+| [`wrapStyle`](#wrapstyle) | Appearance | string | [Field Appearance](concepts/field-appearance) |
+
+---
+
+# Part 1: Universal Properties
+
+These properties apply to **all field types**.
+
+## Identity & Display
+
+### title
+**Type:** `string`  
+**Required:** Yes  
+**Category:** Identity
+
+The human-readable label displayed to users.
+
+```json
+{ "title": "Customer Name" }
+```
+
+---
+
+### type
+**Type:** `string`  
+**Required:** Yes  
+**Category:** Identity  
+**Allowed Values:** `"string"`, `"number"`, `"boolean"`, `"object"`, `"array"`
+
+The data type determining how the value is stored. See [Field Types](concepts/field-types).
+
+| Value | Storage | Example Answer |
+|-------|---------|----------------|
+| `string` | Text | `"John Doe"` |
+| `number` | Numeric | `42` or `3.14` |
+| `boolean` | True/False | `true` |
+| `object` | Nested structure | `{ "city": "Mumbai" }` |
+| `array` | List | `[{ ... }, { ... }]` |
+
+```json
+{ "type": "string" }
+```
+
+---
+
+### description
+**Type:** `string`  
+**Required:** Yes  
+**Category:** Identity  
+**Allowed Values:** `textfield`, `email`, `qrcode`, `barcode`, `number`, `phone`, `label`, `location`, `progress`, `rating`, `network`, `group_member`, `string_list`, `poll`, `debit`, `multimedia`, `section`, `form`, `richtext`, `timestamp`, `time`, `date`, `duration`, `business_card`, `report`, `checklist`, `geofence`, `separated_input`, `object_detection`, `object_dimension`, `text_extraction`
+
+The UI component type to render. See [Field Types Reference](field-types/README).
+
+**Common categories:**
+- **Text:** `textfield`, `email`, `phone`, `richtext`
+- **Selection:** `string_list`
+- **Number:** `number`, `rating`, `progress`
+- **Date/Time:** `timestamp`, `date`, `time`, `duration`
+- **Media:** `multimedia`
+- **Location:** `location`, `geofence`
+- **Scanner:** `qrcode`, `barcode`
+- **Structure:** `section`, `form`
+- **Display:** `label`
+
+```json
+{ "description": "textfield" }
+```
+
+---
+
+### hint
+**Type:** `string`  
+**Required:** No  
+**Category:** Appearance  
+**Related:** [Field Appearance](concepts/field-appearance)
+
+Help text displayed near the field to guide users. Shown as tooltip or inline based on `inlineHint`.
+
+```json
+{ "hint": "Enter your full name as it appears on your ID" }
+```
+
+---
+
+### inlineHint
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Appearance
+
+When `true`, displays hint text inline below the field instead of as a tooltip icon.
+
+```json
+{
+  "hint": "We'll send a verification email to this address",
+  "inlineHint": true
+}
+```
+
+---
+
+### placeholder
+**Type:** `string`  
+**Required:** No  
+**Category:** Appearance
+
+Placeholder text shown inside empty input fields.
+
+```json
+{ "placeholder": "e.g., john.doe@example.com" }
+```
+
+---
+
+### layout
+**Type:** `string`  
+**Required:** No  
+**Category:** Appearance  
+**Related:** [Field Appearance](concepts/field-appearance)
+
+Visual variant of the field component. Available values depend on field type:
+
+**For `string_list` (selection fields):**
+| Value | Renders As |
+|-------|------------|
+| *(default)* | Dropdown picker |
+| `radio` | Radio buttons |
+| `checkbox` | Checkboxes (multi-select) |
+| `small_pill` / `smallPill` | Small pill/chip buttons |
+| `large_pill` / `largePill` | Large pill/chip buttons |
+
+**For `section` (containers):**
+| Value | Renders As |
+|-------|------------|
+| *(default)* | Grouped fields |
+| `newPage` | Renders on separate screen |
+| `accordian` | Collapsible accordion |
+| `expandable` / `expanded` | Initially expanded |
+| `collapsible` / `collapsed` | Initially collapsed |
+| `inline` | Inline with parent |
+| `book` | Book-style pagination |
+| `tab` | Tab navigation |
+| `table` | Table layout (for arrays) |
+| `card` | Card container |
+
+**For `label` (display-only):**
+| Value | Renders As |
+|-------|------------|
+| `h1`, `h2`, `h3` | Heading styles |
+| `info` | Info callout (blue) |
+| `warn` | Warning callout (yellow) |
+| `error` | Error callout (red) |
+| `mediaOnly` | Only show media, no text |
+
+**For `number`:**
+| Value | Renders As |
+|-------|------------|
+| `counter` | Stepper with +/- buttons |
+
+```json
+{ "layout": "radio" }
+```
+
+---
+
+### webLayout
+**Type:** `string`  
+**Required:** No  
+**Category:** Appearance  
+**Allowed Values:** `small_pill`, `large_pill`, `accordian`, `radio`, `checkbox`, `table`
+
+Layout variant specifically for web rendering. Takes precedence over `layout` on web platform.
+
+```json
+{
+  "layout": "newPage",
+  "webLayout": "table"
+}
+```
+
+---
+
+### wrapStyle
+**Type:** `string`  
+**Required:** No  
+**Category:** Appearance  
+**Allowed Values:** `"trim"`, `"wrap"`
+
+How to handle long text in title and content.
+
+| Value | Behavior |
+|-------|----------|
+| `trim` | Truncate with ellipsis (...) |
+| `wrap` | Wrap to multiple lines |
+
+```json
+{ "wrapStyle": "wrap" }
+```
+
+---
+
+### prefixText
+**Type:** `string`  
+**Required:** No  
+**Category:** Appearance
+
+Text displayed before the input value (inside field container).
+
+```json
+{
+  "title": "Price",
+  "prefixText": "₹",
+  "description": "number"
+}
+```
+
+---
+
+### suffixText
+**Type:** `string`  
+**Required:** No  
+**Category:** Appearance
+
+Text displayed after the input value (inside field container).
+
+```json
+{
+  "title": "Weight",
+  "suffixText": "kg",
+  "description": "number"
+}
+```
+
+---
+
+### renderAsMd
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Appearance
+
+When `true`, renders field content as Markdown.
+
+```json
+{
+  "title": "**Important:** Please read carefully",
+  "description": "label",
+  "renderAsMd": true
+}
+```
+
+---
+
+## Structure (Objects & Arrays)
+
+### properties
+**Type:** `Map<string, SchemaProperty>`  
+**Required:** For `type: "object"`  
+**Category:** Structure
+
+Child field definitions for object types. Keys become field identifiers in the answer.
+
+```json
+{
+  "type": "object",
+  "description": "section",
+  "properties": {
+    "firstName": { "title": "First Name", "type": "string", "description": "textfield" },
+    "lastName": { "title": "Last Name", "type": "string", "description": "textfield" }
+  }
+}
+```
+
+---
+
+### items
+**Type:** `object` (contains `properties`, `order`, `required`)  
+**Required:** For `type: "array"` sections  
+**Category:** Structure
+
+Schema definition for each element in an array (repeating section).
+
+> ⚠️ **Important:** For array sections (`type: "array"`), child fields are defined inside `items.properties`, NOT in `properties` directly. This follows JSON Schema array convention.
+
+**Structure:**
+```json
+{
+  "type": "array",
+  "description": "section",
+  "items": {
+    "type": "object",
+    "properties": {
+      "fieldKey": { /* SchemaProperty */ }
+    },
+    "order": ["fieldKey1", "fieldKey2"],
+    "required": ["fieldKey1"]
+  }
+}
+```
+
+**Complete Example:**
+```json
+{
+  "title": "Family Members",
+  "type": "array",
+  "description": "section",
+  "minRows": 1,
+  "maxRows": 10,
+  "newRowLabel": "Add Family Member",
+  "items": {
+    "type": "object",
+    "properties": {
+      "name": { 
+        "title": "Name", 
+        "type": "string", 
+        "description": "textfield" 
+      },
+      "relation": {
+        "title": "Relation",
+        "type": "string",
+        "description": "string_list",
+        "enum": ["Spouse", "Child", "Parent", "Sibling"]
+      },
+      "age": {
+        "title": "Age",
+        "type": "number",
+        "description": "number"
+      }
+    },
+    "order": ["name", "relation", "age"],
+    "required": ["name", "relation"]
+  }
+}
+```
+
+**Comparison: Object Section vs Array Section**
+
+| Aspect | Object Section (`type: "object"`) | Array Section (`type: "array"`) |
+|--------|-----------------------------------|--------------------------------|
+| Child properties location | `properties` | `items.properties` |
+| Child order location | `order` | `items.order` |
+| Child required location | `required` | `items.required` |
+| UI Rendering | Single group of fields | Repeatable rows |
+
+---
+
+### order
+**Type:** `string[]`  
+**Required:** No (but recommended)  
+**Category:** Structure
+
+Display order of child fields. Fields not in order may be hidden or appear last.
+
+```json
+{ "order": ["firstName", "lastName", "email", "phone"] }
+```
+
+---
+
+### required
+**Type:** `string[]`  
+**Required:** No  
+**Category:** Structure
+
+List of required child field keys (JSON Schema compatibility). Prefer using `accessMatrix.mandatory` for fine-grained control.
+
+```json
+{ "required": ["firstName", "email"] }
+```
+
+---
+
+## Access Control
+
+### accessMatrix
+**Type:** `AccessMatrix`  
+**Required:** No  
+**Category:** Access Control  
+**Related:** [Visibility & Access](concepts/visibility-access)
+
+Field-level access control for visibility, editability, and requirements.
+
+```json
+{
+  "accessMatrix": {
+    "visibility": "VISIBLE",
+    "mandatory": true,
+    "readOnly": false,
+    "roles": ["USER", "ADMIN"],
+    "answer": "default value"
+  }
+}
+```
+
+See [AccessMatrix Object](#accessmatrix-object) for all properties.
+
+---
+
+## Conditional Logic
+
+### predicates
+**Type:** `Predicate[]`  
+**Required:** No  
+**Category:** Conditional Logic  
+**Related:** [Conditional Logic](concepts/conditional-logic)
+
+Conditional rules that control field behavior dynamically.
+
+```json
+{
+  "predicates": [{
+    "condition": "this.status == 'Active'",
+    "action": "APPLY_ACCESS_MATRIX",
+    "actionConfig": {
+      "accessMatrix": {
+        "visibility": "VISIBLE",
+        "mandatory": true
+      }
+    }
+  }]
+}
+```
+
+See [Predicate Object](#predicate-object) for all properties.
+
+---
+
+### dependentKeys
+**Type:** `string[]`  
+**Required:** No  
+**Category:** Conditional Logic  
+**Related:** [Conditional Logic](concepts/conditional-logic)
+
+Fields that should re-evaluate their predicates when this field changes. Essential for cascade behavior.
+
+```json
+{
+  "title": "State",
+  "dependentKeys": ["district", "city", "fullAddress"]
+}
+```
+
+When State changes → predicates on District, City, and FullAddress are re-evaluated.
+
+---
+
+### formulaKeys
+**Type:** `string[]`  
+**Required:** No  
+**Category:** Conditional Logic  
+**Related:** [Calculated Fields](recipes/calculated-field)
+
+Fields used in this field's CALC formula. Declares dependencies for calculation triggering.
+
+```json
+{
+  "title": "Total Amount",
+  "formulaKeys": ["price", "quantity", "discount"],
+  "predicates": [{
+    "action": "CALC",
+    "actionConfig": { 
+      "formula": "(this.price * this.quantity) - this.discount" 
+    }
+  }]
+}
+```
+
+---
+
+### dependentResponseConfigurations
+**Type:** `Map<string, List<Integer>>`  
+**Required:** No  
+**Category:** Conditional Logic
+
+Advanced configuration for dependent response behavior.
+
+---
+
+## Validation
+
+### pattern
+**Type:** `string` (regex)  
+**Required:** No  
+**Category:** Validation
+
+Regular expression for validating string input.
+
+```json
+{
+  "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]{1}$",
+  "validationMessage": "Enter valid PAN (e.g., ABCDE1234F)"
+}
+```
+
+---
+
+### validationMessage
+**Type:** `string`  
+**Required:** No  
+**Category:** Validation
+
+Custom error message shown when validation fails.
+
+```json
+{
+  "pattern": "^[a-zA-Z ]+$",
+  "validationMessage": "Name can only contain letters and spaces"
+}
+```
+
+---
+
+### minimum / maximum
+**Type:** `number`  
+**Required:** No  
+**Category:** Validation
+
+**For numbers:** Min/max allowed value.
+
+```json
+{
+  "type": "number",
+  "minimum": 0,
+  "maximum": 100
+}
+```
+
+**For dates:** Offset from current date (combined with `timeUnit`).
+
+```json
+{
+  "description": "timestamp",
+  "minimum": -7,
+  "maximum": 30,
+  "timeUnit": "DAY"
+}
+```
+↑ Allows dates from 7 days ago to 30 days from now.
+
+---
+
+### minSize / maxSize
+**Type:** `integer`  
+**Required:** No  
+**Category:** Validation  
+**Constraints:** 1 to MAX_MEDIA_UPLOAD_SIZE
+
+**For strings:** Min/max character count.
+**For multimedia:** Min/max file size in bytes.
+
+```json
+{
+  "description": "multimedia",
+  "maxSize": 5242880
+}
+```
+↑ 5MB limit
+
+---
+
+### minRows / maxRows
+**Type:** `integer`  
+**Required:** No  
+**Default:** `minRows: 1`, `maxRows: unlimited`  
+**Category:** Section/Array  
+**Constraints:** 0 to 999
+
+For arrays: Min/max number of rows allowed.
+
+- `minRows`: Number of placeholder items shown by default (default: 1)
+- `maxRows`: Maximum items allowed (default: unlimited)
+
+```json
+{
+  "type": "array",
+  "description": "section",
+  "minRows": 1,
+  "maxRows": 10
+}
+```
+
+> **Note:** By default, repeating sections show 1 placeholder item so users have a form to fill immediately.
+
+---
+
+### comparatorType
+**Type:** `Operator`  
+**Required:** No  
+**Category:** Validation
+
+Comparison operator type for validation.
+
+---
+
+### operator
+**Type:** `string`  
+**Required:** No  
+**Category:** Validation
+
+Operator for advanced validation comparisons.
+
+---
+
+## Options & Enums
+
+### enum
+**Type:** `string[]`  
+**Required:** No  
+**Category:** Selection  
+**JSON Property:** `"enum"` (maps to `enumList` in Java)
+
+Predefined list of selectable options.
+
+```json
+{
+  "description": "string_list",
+  "enum": ["Option A", "Option B", "Option C"]
+}
+```
+
+---
+
+### sortOptions
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Selection
+
+Sort enum options alphabetically.
+
+```json
+{ "sortOptions": true }
+```
+
+---
+
+## Master Data
+
+Properties for connecting fields to external data sources. See [Master Data](concepts/master-data).
+
+### masterId
+**Type:** `UUID`  
+**Required:** No  
+**Category:** Master Data
+
+ID of the master data source (form or list).
+
+```json
+{ "masterId": "70311147-2fcc-489c-9981-8f374361a229" }
+```
+
+---
+
+### masterName
+**Type:** `string`  
+**Required:** No  
+**Category:** Master Data
+
+Display name of the master (for debugging/UI).
+
+```json
+{ "masterName": "Location Master" }
+```
+
+---
+
+### masterType
+**Type:** `string`  
+**Required:** No  
+**Category:** Master Data
+
+Type of master data source (`FORM`, `LIST`, etc.).
+
+```json
+{ "masterType": "FORM" }
+```
+
+---
+
+### groupId
+**Type:** `UUID`  
+**Required:** No  
+**Category:** Master Data
+
+Group ID for the master form (when masterType is FORM).
+
+```json
+{ "groupId": "3a88d200-5656-420d-a3b4-b4d756ca1729" }
+```
+
+---
+
+### columnKey
+**Type:** `string`  
+**Required:** No  
+**Category:** Master Data
+
+Field key in master data to use for values.
+
+```json
+{ "columnKey": "state" }
+```
+
+---
+
+### columnName
+**Type:** `string`  
+**Required:** No  
+**Category:** Master Data
+
+Display name of the master column.
+
+```json
+{ "columnName": "State Name" }
+```
+
+---
+
+### searchableKeys
+**Type:** `string[]`  
+**Required:** No  
+**Category:** Master Data
+
+Master data columns that can be searched.
+
+```json
+{ "searchableKeys": ["name", "code", "category"] }
+```
+
+---
+
+### masterPreviewFields
+**Type:** `string[]`  
+**Required:** No  
+**Category:** Master Data
+
+Additional master columns to show when selecting.
+
+```json
+{ "masterPreviewFields": ["description", "price"] }
+```
+
+---
+
+### filterString
+**Type:** `string`  
+**Required:** No  
+**Category:** Master Data
+
+JavaScript expression to filter master data rows.
+
+```json
+{ "filterString": "this.category == formAnswer.selectedCategory" }
+```
+
+---
+
+### filterStringExpression
+**Type:** `string`  
+**Required:** No  
+**Category:** Master Data
+
+Alternative filter expression format.
+
+---
+
+### filterStringCondition
+**Type:** `ConditionPojo`  
+**Required:** No  
+**Category:** Master Data
+
+Structured condition object for filtering.
+
+---
+
+### filterStringConditionJson
+**Type:** `string`  
+**Required:** No  
+**Category:** Master Data
+
+JSON Logic format filter condition.
+
+---
+
+### filterStringConditionTreeFormat
+**Type:** `string`  
+**Required:** No  
+**Category:** Master Data
+
+Tree format of filter condition (for web client compatibility).
+
+---
+
+### filterOnConditionPojo
+**Type:** `boolean`  
+**Required:** No  
+**Category:** Master Data
+
+Use ConditionPojo for filtering instead of filterString.
+
+---
+
+### masterFilterConfig
+**Type:** `Map<UUID, MasterFilterConfiguration>`  
+**Required:** No  
+**Category:** Master Data
+
+Advanced master filter configurations by master ID.
+
+---
+
+### masterConfiguration
+**Type:** `MasterConfiguration`  
+**Required:** No  
+**Category:** Master Data
+
+Additional master data configuration options.
+
+---
+
+### enableOfflineOptionFilterMaster
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Master Data
+
+Enable client-side filtering of cached master data.
+
+```json
+{ "enableOfflineOptionFilterMaster": true }
+```
+
+---
+
+### enableOnlineMaster
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Master Data
+
+Fetch master data from server on-demand.
+
+```json
+{ "enableOnlineMaster": true }
+```
+
+---
+
+### enableOnlineSearchableMaster
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Master Data
+
+Enable server-side search in master data.
+
+```json
+{ "enableOnlineSearchableMaster": true }
+```
+
+---
+
+### disableOfflineMaster
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Master Data
+
+Disable offline caching of master data.
+
+```json
+{ "disableOfflineMaster": true }
+```
+
+---
+
+### allowBypassOfMasterListPopulation
+**Type:** `boolean`  
+**Required:** No  
+**Category:** Master Data
+
+Allow bypassing master list population.
+
+---
+
+### validateAgainstMasters
+**Type:** `boolean`  
+**Required:** No  
+**Category:** Master Data
+
+Validate that field value exists in master data.
+
+```json
+{ "validateAgainstMasters": true }
+```
+
+---
+
+### masterCombinationKeys
+**Type:** `string[]`  
+**Required:** No  
+**Category:** Master Data
+
+Fields for combined master validation.
+
+```json
+{ "masterCombinationKeys": ["state", "district"] }
+```
+
+---
+
+### autoPopulateDependentKeys
+**Type:** `boolean`  
+**Required:** No  
+**Category:** Master Data
+
+Auto-populate dependent fields from master data.
+
+---
+
+### populateMasterDataInServer
+**Type:** `boolean`  
+**Required:** No  
+**Category:** Master Data
+
+Populate master data on server side.
+
+---
+
+### overwriteMasterDataInServer
+**Type:** `boolean`  
+**Required:** No  
+**Category:** Master Data
+
+Overwrite existing master data values on server.
+
+---
+
+### prefilledDataMappingKey
+**Type:** `string`  
+**Required:** No  
+**Category:** Master Data
+
+Key from prefilled data to populate this field.
+
+---
+
+### fontCase
+**Type:** `string`  
+**Required:** No  
+**Category:** Master Data
+
+Font case transformation for master data API calls (`UPPER`, `LOWER`, etc.).
+
+---
+
+## Localization
+
+Properties for multi-language support. See [Localization](concepts/localization).
+
+### localisationMap
+**Type:** `Map<string, Map<string, Object>>`  
+**Required:** No  
+**Category:** Localization
+
+Translations for field properties by language.
+
+```json
+{
+  "localisationMap": {
+    "Hindi": {
+      "title": "ग्राहक का नाम",
+      "hint": "अपना पूरा नाम दर्ज करें"
+    },
+    "Odia": {
+      "title": "ଗ୍ରାହକ ନାମ"
+    }
+  }
+}
+```
+
+---
+
+### enumListLocalisationMap
+**Type:** `Map<string, Map<string, Object>>`  
+**Required:** No  
+**Category:** Localization
+
+Translations for enum options.
+
+```json
+{
+  "enumListLocalisationMap": {
+    "Hindi": {
+      "Yes": "हाँ",
+      "No": "नहीं"
+    }
+  }
+}
+```
+
+---
+
+### mdEnumListLocalisationMap
+**Type:** `Map<string, Map<string, Object>>`  
+**Required:** No  
+**Category:** Localization
+
+Translations for master data enum options.
+
+---
+
+## Auto-Generation
+
+Properties for automatic value generation. See [Auto-Generated IDs](recipes/auto-generated-ids).
+
+### autoGenerate
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Auto-Generation
+
+Enable auto-generation of field value.
+
+```json
+{ "autoGenerate": true }
+```
+
+---
+
+### autoGenerateConfig
+**Type:** `AutoGenerateConfig`  
+**Required:** No  
+**Category:** Auto-Generation
+
+Configuration for auto-generated values.
+
+```json
+{
+  "autoGenerateConfig": {
+    "generateBeforePredicate": true,
+    "components": [
+      { "type": "literal", "value": "INV-" },
+      { "type": "sequence", "format": "00000" }
+    ]
+  }
+}
+```
+
+---
+
+## Display Configuration
+
+Visual styling objects. See [Field Appearance](concepts/field-appearance).
+
+### titleDisplayConfiguration
+**Type:** `FieldDisplayConfiguration`  
+**Required:** No  
+**Category:** Appearance
+
+Custom styling for the field title/label.
+
+---
+
+### viewModeConfiguration
+**Type:** `FieldDisplayConfiguration`  
+**Required:** No  
+**Category:** Appearance
+
+Display configuration for view/read-only mode.
+
+---
+
+### fillModeConfiguration
+**Type:** `FieldDisplayConfiguration`  
+**Required:** No  
+**Category:** Appearance
+
+Display configuration for fill/edit mode.
+
+---
+
+### formDisplayConfiguration
+**Type:** `FieldDisplayConfiguration`  
+**Required:** No  
+**Category:** Appearance
+
+General form display configuration.
+
+---
+
+### rowHeaderDisplayConfiguration
+**Type:** `FieldDisplayConfiguration`  
+**Required:** No  
+**Category:** Appearance
+
+Styling for row headers in array sections.
+
+---
+
+## Miscellaneous Universal
+
+### uri
+**Type:** `string` (URL)  
+**Required:** No  
+**Category:** External
+
+External URI associated with the field.
+
+---
+
+### primaryKeys
+**Type:** `string[]`  
+**Required:** No  
+**Category:** Identity
+
+Fields used to generate unique hash/document ID.
+
+```json
+{ "primaryKeys": ["customerId", "orderDate"] }
+```
+
+---
+
+### previewFields
+**Type:** `string[]`  
+**Required:** No  
+**Category:** Display
+
+Fields to show in preview/summary (chat bubbles, lists).
+
+```json
+{ "previewFields": ["name", "date", "amount"] }
+```
+
+---
+
+### caseIdentifierKey
+**Type:** `string`  
+**Required:** No  
+**Category:** Identity
+
+Key used for case/record identification.
+
+---
+
+### clonedFieldKey
+**Type:** `string`  
+**Required:** No  
+**Category:** Identity
+
+Key of field this was cloned from.
+
+---
+
+### sqlTitle
+**Type:** `string`  
+**Required:** No  
+**Category:** Database
+
+SQL-compatible column name for database tables.
+
+```json
+{ "sqlTitle": "customer_name" }
+```
+
+---
+
+### sortConfig
+**Type:** `SortConfig`  
+**Required:** No  
+**Category:** Display
+
+Sorting configuration for the field.
+
+---
+
+# Part 2: Field-Specific Properties
+
+These properties only apply to specific field types.
+
+## textfield / email / phone
+
+### otpValidation
+**Type:** `string`  
+**Allowed Values:** `"REQUESTED"`, `"MANDATORY"`  
+**Category:** Verification
+
+Require OTP verification for this field.
+
+```json
+{ "otpValidation": "MANDATORY" }
+```
+
+---
+
+### otpConfig
+**Type:** `OtpConfig`  
+**Required:** No  
+**Category:** Verification
+
+Configuration for OTP validation behavior.
+
+---
+
+## number
+
+### format
+**Type:** `string`  
+**Required:** No  
+**Category:** Display
+
+Number display format pattern.
+
+```json
+{ "format": "#,##0.00" }
+```
+
+Common patterns:
+- `#,##0` → 1,234
+- `#,##0.00` → 1,234.56
+- `#.##` → 1234.56
+
+---
+
+## string_list (Selection Fields)
+
+### allowWildcardSelect
+**Type:** `boolean`  
+**Required:** No  
+**Category:** Selection
+
+Allow selecting all options at once.
+
+```json
+{ "allowWildcardSelect": true }
+```
+
+---
+
+### hideSearchIcon
+**Type:** `boolean`  
+**Required:** No  
+**Category:** Selection
+
+Hide the search icon in dropdown.
+
+```json
+{ "hideSearchIcon": true }
+```
+
+---
+
+### disableManualEntry
+**Type:** `boolean`  
+**Required:** No  
+**Category:** Selection
+
+Prevent typing custom values (only allow selection from list).
+
+```json
+{ "disableManualEntry": true }
+```
+
+---
+
+### selectAllButtonText
+**Type:** `string`  
+**Required:** No  
+**Category:** Selection
+
+Custom text for "select all" button.
+
+```json
+{ "selectAllButtonText": "Choose All Categories" }
+```
+
+---
+
+## timestamp / date / time
+
+### dateOnly
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** DateTime
+
+Only pick date, no time component.
+
+```json
+{ "dateOnly": true }
+```
+
+---
+
+### timeOnly
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** DateTime
+
+Only pick time, no date component.
+
+```json
+{ "timeOnly": true }
+```
+
+---
+
+### systemTime
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** DateTime
+
+Auto-fill with current system date/time (not user-selectable).
+
+```json
+{ "systemTime": true }
+```
+
+---
+
+### generateSystemTimeAtServer
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** DateTime
+
+Generate system time on server (for consistency across timezones).
+
+```json
+{ 
+  "systemTime": true,
+  "generateSystemTimeAtServer": true 
+}
+```
+
+---
+
+### enableEventScheduling
+**Type:** `boolean`  
+**Required:** No  
+**Category:** DateTime
+
+Allow scheduling as calendar event.
+
+```json
+{ "enableEventScheduling": true }
+```
+
+---
+
+### format
+**Type:** `string`  
+**Required:** No  
+**Category:** DateTime
+
+Date/time display format (Java date format pattern).
+
+```json
+{ "format": "dd MMM yyyy HH:mm" }
+```
+
+Common formats:
+- `dd/MM/yyyy` → 15/01/2024
+- `dd-MM-yyyy` → 15-01-2024
+- `MMM dd, yyyy` → Jan 15, 2024
+- `HH:mm` → 14:30 (24-hour)
+- `hh:mm a` → 02:30 PM (12-hour)
+- `yyyy-MM-dd'T'HH:mm:ss` → ISO format
+
+---
+
+### timeUnit
+**Type:** `string`  
+**Allowed Values:** `"DAY"`, `"WEEK"`, `"MONTH"`, `"YEAR"`, `"HOUR"`, `"MINUTE"`, `"SECOND"`  
+**Category:** DateTime
+
+Unit for minimum/maximum date offsets.
+
+```json
+{
+  "minimum": -7,
+  "maximum": 30,
+  "timeUnit": "DAY"
+}
+```
+↑ Allows dates from 7 days ago to 30 days from now.
+
+---
+
+### timeDelta
+**Type:** `integer`  
+**Required:** No  
+**Category:** DateTime
+
+Time offset value for date calculations.
+
+---
+
+### period
+**Type:** `string`  
+**Allowed Values:** `"Today"`, `"Yesterday"`, `"MTD"`, `"WTD"`, `"YTD"`, `"Custom"`  
+**Category:** DateTime
+
+Predefined date period selector.
+
+---
+
+## multimedia (Image/Video/Audio/Document)
+
+### multimediaType
+**Type:** `string`  
+**Allowed Values:** `"image"`, `"video"`, `"audio"`, `"document"`, `"canvas"`  
+**Category:** Multimedia
+
+Type of media allowed.
+
+```json
+{ 
+  "description": "multimedia",
+  "multimediaType": "image" 
+}
+```
+
+---
+
+### disableFilepicker
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Multimedia
+
+Disable file picker (force camera capture for images).
+
+```json
+{ "disableFilepicker": true }
+```
+
+---
+
+### enableGeoTagging
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Multimedia
+
+Embed GPS coordinates in image metadata.
+
+```json
+{ "enableGeoTagging": true }
+```
+
+---
+
+### showGeoCoordinates
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Multimedia
+
+Display GPS coordinates to user after capture.
+
+```json
+{ "showGeoCoordinates": true }
+```
+
+---
+
+### enforceCameraFlash
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Multimedia
+
+Force camera flash when capturing.
+
+```json
+{ "enforceCameraFlash": true }
+```
+
+---
+
+### cameraHint
+**Type:** `string`  
+**Required:** No  
+**Category:** Multimedia
+
+Hint text displayed when camera is open.
+
+```json
+{ "cameraHint": "Hold camera steady and ensure good lighting" }
+```
+
+---
+
+### embedImageMetadata
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Multimedia
+
+Include EXIF metadata in uploaded images.
+
+```json
+{ "embedImageMetadata": true }
+```
+
+---
+
+### shouldNotAutoDismissCameraView
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Multimedia
+
+Keep camera open after capture (for multiple photos).
+
+```json
+{ "shouldNotAutoDismissCameraView": true }
+```
+
+---
+
+### multimediaConfig
+**Type:** `MultimediaConfig`  
+**Required:** No  
+**Category:** Multimedia
+
+Additional multimedia configuration options (consolidated config object).
+
+---
+
+### mediaInfoMetaDataFields
+**Type:** `string[]`  
+**Required:** No  
+**Category:** Multimedia
+
+Metadata fields to extract from media files.
+
+```json
+{ "mediaInfoMetaDataFields": ["duration", "resolution", "fileSize"] }
+```
+
+---
+
+## location
+
+### pickManually
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Location
+
+Allow manual pin placement on map.
+
+```json
+{ "pickManually": true }
+```
+
+---
+
+### editable
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Location
+
+Allow editing location after capture.
+
+```json
+{ "editable": true }
+```
+
+---
+
+### locationMandatory
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Location
+
+GPS coordinates are required (vs. address only).
+
+```json
+{ "locationMandatory": true }
+```
+
+---
+
+### locationFieldConfig
+**Type:** `LocationFieldConfig`  
+**Required:** No  
+**Category:** Location
+
+Additional location field configuration options.
+
+---
+
+### geocodeDataMapping
+**Type:** `Map<string, string>`  
+**Required:** No  
+**Category:** Location
+
+Map geocode data to form fields (auto-fill address components).
+
+```json
+{
+  "geocodeDataMapping": {
+    "city": "address.city",
+    "state": "address.state",
+    "pincode": "address.pincode"
+  }
+}
+```
+
+---
+
+## qrcode / barcode
+
+### qrConfig
+**Type:** `QrConfigurationPojo`  
+**Required:** No  
+**Category:** QR/Barcode
+
+QR code scanning configuration.
+
+---
+
+### scanDisplayValueForBarCode
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** QR/Barcode
+
+Show scanned barcode value to user.
+
+```json
+{ "scanDisplayValueForBarCode": true }
+```
+
+---
+
+## section (Object/Array Containers)
+
+### newRowLabel
+**Type:** `string`  
+**Required:** No  
+**Default:** `"Add Item"`  
+**Category:** Section/Array
+
+Label for "add new row" button in arrays.
+
+```json
+{ "newRowLabel": "+ Add Family Member" }
+```
+
+---
+
+### defaultExpandedCount
+**Type:** `integer`  
+**Required:** No  
+**Default:** `1`  
+**Category:** Section/Array
+
+Number of items to show expanded by default in a repeating section.
+
+| Value | Behavior |
+|-------|----------|
+| `0` | All items start collapsed |
+| `1` | First item expanded, rest collapsed (default) |
+| `N` | First N items expanded, rest collapsed |
+| Large number | All items expanded |
+
+```json
+{
+  "type": "array",
+  "description": "section",
+  "defaultExpandedCount": 1,
+  "items": { ... }
+}
+```
+
+**Use Cases:**
+- `0`: Long forms where users navigate manually
+- `1`: Default, shows first item for immediate editing
+- All expanded: Short repeating sections (2-3 items)
+
+---
+
+### hideAddNewRowButton
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Section/Array
+
+Hide the add row button.
+
+```json
+{ "hideAddNewRowButton": true }
+```
+
+---
+
+### keysForRowHeader
+**Type:** `string[]`  
+**Required:** No  
+**Category:** Section/Array
+
+Fields to display in collapsed row header.
+
+```json
+{ "keysForRowHeader": ["name", "relation", "age"] }
+```
+
+---
+
+### immutableRowCount
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Section/Array
+
+Prevent adding/removing rows (fixed count).
+
+```json
+{ "immutableRowCount": true }
+```
+
+---
+
+### excludedFieldsForCopiedRow
+**Type:** `string[]`  
+**Required:** No  
+**Category:** Section/Array
+
+Fields to clear when duplicating a row.
+
+```json
+{ "excludedFieldsForCopiedRow": ["id", "timestamp", "signature"] }
+```
+
+---
+
+### allowPagination
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Section/Array
+
+Enable pagination for large arrays.
+
+```json
+{ "allowPagination": true }
+```
+
+---
+
+### useLastValue
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Section/Array
+
+Pre-fill new rows with previous row's values.
+
+```json
+{ "useLastValue": true }
+```
+
+---
+
+### sectionArrayConfiguration
+**Type:** `ColumnWidthConfiguration`  
+**Required:** No  
+**Category:** Section/Array
+
+Column width and layout configuration for table view.
+
+---
+
+## separated_input (Segmented Input)
+
+### separatedInputConfiguration
+**Type:** `SeparatedInputBlock[]`  
+**Required:** No  
+**Category:** Separated Input
+
+Configuration for each input segment.
+
+```json
+{
+  "separatedInputConfiguration": [
+    { "length": 4, "separator": "-" },
+    { "length": 4, "separator": "-" },
+    { "length": 4, "separator": "-" },
+    { "length": 4 }
+  ]
+}
+```
+↑ Creates input like: `XXXX-XXXX-XXXX-XXXX`
+
+---
+
+## object_detection
+
+### imageObjectDetectionConfigs
+**Type:** `ImageObjectDetection[]`  
+**Required:** No  
+**Category:** Object Detection
+
+Configuration for object detection in images.
+
+---
+
+### bypassValidationIfInvalid
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Object Detection
+
+Allow submission even if detection fails.
+
+```json
+{ "bypassValidationIfInvalid": true }
+```
+
+---
+
+## External Integrations
+
+### remoteValidations
+**Type:** `RemoteValidation[]`  
+**Required:** No  
+**Category:** Validation
+
+External API validation configurations.
+
+---
+
+### remoteValidation
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Validation
+
+Enable remote validation for this field.
+
+```json
+{ "remoteValidation": true }
+```
+
+---
+
+### externalEntityVerificationConfigs
+**Type:** `ExternalEntityVerificationConfig[]`  
+**Required:** No  
+**Category:** External
+
+Configuration for external verification (Aadhaar, PAN, Bank Account, etc.).
+
+---
+
+### externalMasterDetail
+**Type:** `ExternalMasterDetail`  
+**Required:** No  
+**Category:** External
+
+External master data source configuration.
+
+---
+
+### hypervergeIntegrationConfig
+**Type:** `HypervergeIntegrationConfig`  
+**Required:** No  
+**Category:** External
+
+Configuration for Hyperverge identity verification integration.
+
+---
+
+### captureIpAddress
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** System
+
+Capture client IP address into this field.
+
+```json
+{ "captureIpAddress": true }
+```
+
+---
+
+## User Profile Integration
+
+### userProfileDriven
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** User Profile
+
+Auto-populate from logged-in user's profile.
+
+```json
+{ "userProfileDriven": true }
+```
+
+---
+
+### userProfileKey
+**Type:** `string`  
+**Required:** No  
+**Category:** User Profile
+
+Which user profile field to use for auto-population.
+
+```json
+{ 
+  "userProfileDriven": true,
+  "userProfileKey": "department" 
+}
+```
+
+---
+
+### companyMasterId
+**Type:** `UUID`  
+**Required:** No  
+**Category:** User Profile
+
+Company master ID for user profile mapping.
+
+---
+
+## Scoring
+
+### scoringConfigs
+**Type:** `Map<string, ScoringConfig>`  
+**Required:** No  
+**Category:** Scoring
+
+Scoring configuration for assessment forms.
+
+---
+
+## Web-Specific
+
+### customWebFormLayouts
+**Type:** `Map[]`  
+**Required:** No  
+**Category:** Web
+
+Custom web form layout configurations.
+
+---
+
+### enableViewModeWebLayout
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Web
+
+Enable web layout in view mode.
+
+```json
+{ "enableViewModeWebLayout": true }
+```
+
+---
+
+### enableWebLayout
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Web
+
+Enable web-specific layout system.
+
+```json
+{ "enableWebLayout": true }
+```
+
+---
+
+### hideSyncMasterStrip
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Web
+
+Hide master sync indicator on web.
+
+```json
+{ "hideSyncMasterStrip": true }
+```
+
+---
+
+## Bulk Upload & Reports
+
+### disableAccessMatrixInBulkUpload
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Bulk Upload
+
+Ignore access matrix during bulk upload.
+
+```json
+{ "disableAccessMatrixInBulkUpload": true }
+```
+
+---
+
+### formReportConfiguration
+**Type:** `FormReportConfiguration`  
+**Required:** No  
+**Category:** Reports
+
+Configuration for field in reports.
+
+---
+
+### showUrlInExcel
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Reports
+
+Show URLs in Excel exports.
+
+```json
+{ "showUrlInExcel": true }
+```
+
+---
+
+### searchQueryConfiguration
+**Type:** `SearchQueryConfiguration`  
+**Required:** No  
+**Category:** Search
+
+Search query configuration for the field.
+
+---
+
+### enableClientSideValidateButton
+**Type:** `boolean`  
+**Required:** No  
+**Default:** `false`  
+**Category:** Validation
+
+Show validate button for client-side validation.
+
+---
+
+## Deprecated Properties
+
+⚠️ These properties are deprecated and should not be used in new schemas:
+
+| Property | Replaced By | Notes |
+|----------|-------------|-------|
+| `readOnly` | `accessMatrix.readOnly` | Use AccessMatrix |
+| `hidden` | `accessMatrix.visibility` | Use `INVISIBLE` or `GONE` |
+| `defaultValue` | `accessMatrix.answer` | Use AccessMatrix |
+| `toBeForwarded` | Form-level assignee config | Deprecated |
+| `self` | Assignee properties | Deprecated |
+| `cameraOnly` | `disableFilepicker` | Use disableFilepicker instead |
+| `appendOnly` | Predicates | Use APPLY_ACCESS_MATRIX |
+
+---
+
+# Part 3: Form-Level Properties
+
+These properties exist on `FormSchema`, not on individual fields.
+
+## Identity
+
+| Property | Type | Purpose |
+|----------|------|---------|
+| `groupId` | UUID | Organization/workspace ID |
+| `formId` | UUID | Unique form identifier |
+| `companyId` | UUID | Company ID (multi-tenant) |
+| `name` | string | Display name |
+
+---
+
+## Behavior Flags
+
+| Property | Type | Default | Purpose |
+|----------|------|---------|---------|
+| `adminOnly` | boolean | false | Only admins can fill |
+| `isPublic` | boolean | false | Publicly accessible |
+| `master` | boolean | false | Used as master data |
+| `linkableOnly` | boolean | false | Must be linked to another form |
+| `disableDelete` | boolean | false | Prevent answer deletion |
+| `updatable` | boolean | true | Allow editing answers |
+| `chatDisabled` | boolean | false | Disable chat/notifications |
+| `hidden` | boolean | false | Hide form in lists |
+| `task` | boolean | false | Treat as task |
+
+---
+
+## Access
+
+| Property | Type | Purpose |
+|----------|------|---------|
+| `initAccessMatrices` | AccessMatrix[] | Access for new submissions |
+| `updateAccessMatrices` | AccessMatrix[] | Access for editing |
+
+See [Visibility & Access](concepts/visibility-access) for details.
+
+---
+
+## Relationships
+
+| Property | Type | Purpose |
+|----------|------|---------|
+| `parentSchemaIdentifier` | FormSchemaIdentifier | Parent form reference |
+| `childSchemaIdentifiers` | FormSchemaIdentifier[] | Child form references |
+| `linkableFormDetails` | LinkableFormDetail[] | Forms that can be linked |
+
+---
+
+## Workflow
+
+| Property | Type | Purpose |
+|----------|------|---------|
+| `workflowId` | UUID | Associated workflow |
+| `statuses` | string[] | Available statuses |
+| `priorities` | string[] | Available priorities |
+
+---
+
+## Settings
+
+| Property | Type | Purpose |
+|----------|------|---------|
+| `formSetting` | FormSetting | Form-level configuration |
+| `primaryKeyConstraints` | Constraint[] | Uniqueness constraints |
+| `localisationMap` | Map | Form name translations |
+
+---
+
+# Part 4: Nested Objects
+
+Detailed reference for complex nested objects.
+
+## AccessMatrix Object
+
+Controls field-level access and visibility. See [Visibility & Access](concepts/visibility-access).
+
+| Property | Type | Values | Purpose |
+|----------|------|--------|---------|
+| `visibility` | string | `VISIBLE`, `INVISIBLE`, `GONE` | Fill mode visibility |
+| `viewModeVisibility` | string | `VISIBLE`, `INVISIBLE`, `GONE` | View mode visibility |
+| `mandatory` | boolean | true/false | Required for submission |
+| `readOnly` | boolean | true/false | Prevent editing |
+| `roles` | string[] | `ADMIN`, `SUPERADMIN`, `USER`, `INITIATOR`, `ADHOC`, `CDR` | Role-based access |
+| `cdr` | string[] | Custom role names | Company-defined roles |
+| `userIds` | UUID[] | User IDs | User-specific access |
+| `answer` | any | Default value | Pre-populated value |
+| `defaultMediaName` | string | Filename | Default media filename |
+| `userProfileDriven` | boolean | true/false | Auto-fill from user profile |
+
+**Example:**
+```json
+{
+  "accessMatrix": {
+    "visibility": "VISIBLE",
+    "mandatory": true,
+    "readOnly": false,
+    "roles": ["USER", "ADMIN"],
+    "answer": "Default Value"
+  }
+}
+```
+
+---
+
+## Predicate Object
+
+Conditional rules for dynamic behavior. See [Conditional Logic](concepts/conditional-logic).
+
+| Property | Type | Purpose |
+|----------|------|---------|
+| `condition` | string | JavaScript expression (returns boolean) |
+| `action` | string | Action type |
+| `actionConfig` | object | Action-specific configuration |
+| `skipPredicateExecutionOnClient` | boolean | Only run on server |
+| `skipPredicateExecutionOnServer` | boolean | Only run on client |
+
+**Action Types:**
+- `CALC` - Calculate field value
+- `OPTION_FILTER` - Filter selection options
+- `APPLY_ACCESS_MATRIX` - Change visibility/mandatory/readOnly
+- `VALIDATE` - Custom validation
+- `COPY` - Copy value from another field
+- `CONDITIONAL_FORMAT` - Apply styling
+- `ASYNC_CALC` - Server-side calculation
+- `APPEND` - Append to value
+- `GEO_FENCE` - Geo-fencing validation
+- `FACE_MATCH` - Face matching
+- `CUSTOM_FUNCTION` - Custom function call
+- `JSON_CALC` - JSON calculation
+
+**Example:**
+```json
+{
+  "predicates": [{
+    "condition": "this.country == 'India'",
+    "action": "APPLY_ACCESS_MATRIX",
+    "actionConfig": {
+      "accessMatrix": {
+        "visibility": "VISIBLE",
+        "mandatory": true
+      }
+    }
+  }]
+}
+```
+
+---
+
+## FieldDisplayConfiguration Object
+
+Visual styling configuration. See [Field Appearance](concepts/field-appearance).
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `backgroundColor` | string | Background color (hex: `#ffffff`) |
+| `fontColor` / `textColor` | string | Text color (hex) |
+| `borderColor` | string | Border color (hex) |
+| `borderWidth` | number | Border width in pixels |
+| `borderRadius` | number | Corner radius in pixels |
+| `fontSize` | number | Font size in pixels |
+| `fontWeight` | string | `normal`, `bold`, `100`-`900` |
+| `fontStyle` | string | `normal`, `italic` |
+| `padding` | number | Internal padding |
+| `margin` | number | External margin |
+| `buttonConfiguration` | object | Button-specific config |
+| `localisationMap` | Map | Translations |
+
+**Example:**
+```json
+{
+  "viewModeConfiguration": {
+    "backgroundColor": "#e8f5e9",
+    "fontColor": "#2e7d32",
+    "fontSize": 16,
+    "fontWeight": "bold",
+    "borderRadius": 8
+  }
+}
+```
+
+---
+
+# Quick Reference by Use Case
+
+## "I want to..."
+
+| Goal | Property | Example |
+|------|----------|---------|
+| Make field required | `accessMatrix.mandatory: true` | [Access Control](#accessmatrix) |
+| Hide a field | `accessMatrix.visibility: "GONE"` | [Access Control](#accessmatrix) |
+| Show default value | `accessMatrix.answer` | [Access Control](#accessmatrix) |
+| Calculate value | `predicates` with `CALC` | [Predicates](#predicates) |
+| Filter dropdown options | `predicates` with `OPTION_FILTER` | [Master Data](concepts/master-data) |
+| Limit date range | `minimum`, `maximum`, `timeUnit` | [DateTime](#timestamp--date--time) |
+| Restrict file size | `maxSize` | [Validation](#maxsize) |
+| Allow multiple selections | `type: "array"` | [Selection](#string_list-selection-fields) |
+| Create repeating rows | `type: "array"` + `items` | [Section](#section-objectarray-containers) |
+| Add translations | `localisationMap` | [Localization](#localisationmap) |
+| Connect to master data | `masterId`, `columnKey` | [Master Data](concepts/master-data) |
+| Auto-generate ID | `autoGenerate`, `autoGenerateConfig` | [Auto-Generation](#auto-generation) |
+| Capture location | `description: "location"` | [Location](#location) |
+| Upload files | `description: "multimedia"` | [Multimedia](#multimedia-imagevideoaudiodocument) |
+| Style field differently | `viewModeConfiguration` | [Display Config](#fielddisplayconfiguration-object) |
+| Add radio buttons | `layout: "radio"` | [Layout](#layout) |
+| Create accordion | `layout: "accordian"` | [Layout](#layout) |
+
+---
+
+## See Also
+
+- [Field Types Reference](field-types/README) - Detailed field type documentation
+- [Field Appearance](concepts/field-appearance) - Visual customization guide
+- [Conditional Logic](concepts/conditional-logic) - Predicates deep dive
+- [Visibility & Access](concepts/visibility-access) - AccessMatrix details
+- [Master Data](concepts/master-data) - External data sources
+- [Localization](concepts/localization) - Multi-language support
+- [Calculated Fields](recipes/calculated-field) - CALC predicate examples
+- [Auto-Generated IDs](recipes/auto-generated-ids) - Auto-generation patterns

@@ -1,0 +1,297 @@
+---
+title: "Introduction to Form Schema"
+description: "What Problem Does It Solve?"
+---
+
+
+## What Problem Does It Solve?
+
+Building forms that work across multiple platforms (Android, iOS, Web) traditionally requires:
+- Writing UI code 3 times (once per platform)
+- Keeping validation logic in sync
+- Managing complex conditional rules in each codebase
+- Deploying app updates for any form change
+
+**Form Schema solves this** by defining forms declaratively in JSON. The server sends the schema, and each platform's runtime renders it. Change the schema on the server → all platforms update instantly.
+
+---
+
+## The Big Picture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        SERVER                                │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │              FormSchema (JSON)                       │    │
+│  │  - Field definitions                                 │    │
+│  │  - Validation rules                                  │    │
+│  │  - Conditional logic                                 │    │
+│  │  - Access control                                    │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       CLIENTS                                │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │   Android   │  │     iOS     │  │     Web     │         │
+│  │   Runtime   │  │   Runtime   │  │   Runtime   │         │
+│  │             │  │             │  │             │         │
+│  │  Renders    │  │  Renders    │  │  Renders    │         │
+│  │  same form  │  │  same form  │  │  same form  │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Core Building Blocks
+
+### 1. FormSchema (The Container)
+
+The root object that holds everything about a form:
+
+```json
+{
+  "groupId": "uuid",
+  "formId": "uuid",
+  "name": "Customer Survey",
+  "schema": { /* SchemaProperty - the field definitions */ },
+  "formSetting": { /* Form-level configuration */ },
+  "initAccessMatrices": [ /* Access rules for new submissions */ ],
+  "updateAccessMatrices": [ /* Access rules for editing */ ]
+}
+```
+
+**Key Properties:**
+
+| Property | Purpose |
+|----------|---------|
+| `groupId` | Organization/workspace identifier |
+| `formId` | Unique form identifier |
+| `name` | Display name |
+| `schema` | The actual field definitions (SchemaProperty) |
+| `formSetting` | Form-level behaviors (PDF config, validation settings) |
+| `workflowId` | Links to workflow for multi-step processes |
+
+---
+
+### 2. SchemaProperty (The Field Definition)
+
+Every field in the form is a SchemaProperty:
+
+```json
+{
+  "title": "Customer Name",
+  "type": "string",
+  "description": "textfield",
+  "hint": "Enter full name as per ID",
+  "accessMatrix": {
+    "mandatory": true,
+    "visibility": "VISIBLE"
+  },
+  "predicates": []
+}
+```
+
+**The Three Key Identifiers:**
+
+| Property | What It Defines | Examples |
+|----------|-----------------|----------|
+| `type` | Data type | `string`, `number`, `boolean`, `object`, `array` |
+| `description` | UI component | `textfield`, `string_list`, `multimedia`, `section` |
+| `layout` | Visual variant | `radio`, `checkbox`, `pills`, `accordion` |
+
+Think of it as:
+- **`type`** = How data is stored
+- **`description`** = What UI component to render
+- **`layout`** = How that component looks
+
+---
+
+### 3. The Answer Object
+
+When a user fills the form, answers are stored matching the schema structure:
+
+**Schema:**
+```json
+{
+  "properties": {
+    "name": { "type": "string", "description": "textfield" },
+    "age": { "type": "number", "description": "number" },
+    "address": {
+      "type": "object",
+      "description": "section",
+      "properties": {
+        "city": { "type": "string" },
+        "zip": { "type": "string" }
+      }
+    }
+  }
+}
+```
+
+**Answer:**
+```json
+{
+  "name": "John Doe",
+  "age": 30,
+  "address": {
+    "city": "Mumbai",
+    "zip": "400001"
+  }
+}
+```
+
+The **field key** (e.g., `name`, `age`, `address.city`) maps directly from schema to answer.
+
+---
+
+## How Fields Interact
+
+Fields aren't isolated—they interact through several mechanisms:
+
+### Predicates (Conditional Logic)
+
+"When X happens, do Y to this field"
+
+```json
+{
+  "title": "District",
+  "predicates": [{
+    "condition": "this.state != null",
+    "action": "OPTION_FILTER",
+    "actionConfig": { "field": "state" }
+  }]
+}
+```
+
+→ District options filter based on selected State
+
+### Dependent Keys
+
+"These fields should re-evaluate when I change"
+
+```json
+{
+  "title": "State",
+  "dependentKeys": ["district", "city"]
+}
+```
+
+→ When State changes, District and City predicates run
+
+### Formula Keys
+
+"I use these fields in my calculations"
+
+```json
+{
+  "title": "Total",
+  "formulaKeys": ["price", "quantity"],
+  "predicates": [{
+    "action": "CALC",
+    "actionConfig": { "formula": "this.price * this.quantity" }
+  }]
+}
+```
+
+→ Total recalculates when price or quantity changes
+
+### Master Data
+
+"Get my options from an external data source"
+
+```json
+{
+  "title": "State",
+  "masterId": "location-master-uuid",
+  "columnKey": "state",
+  "masterType": "FORM"
+}
+```
+
+→ Options come from a master data form, not hardcoded enum
+
+---
+
+## Access Control
+
+Every field can have role-based access through `accessMatrix`:
+
+```json
+{
+  "accessMatrix": {
+    "mandatory": true,
+    "readOnly": false,
+    "visibility": "VISIBLE",
+    "roles": ["ADMIN", "USER"]
+  }
+}
+```
+
+| Property | Values | Effect |
+|----------|--------|--------|
+| `visibility` | `VISIBLE`, `INVISIBLE`, `GONE` | Show, hide (keeps space), remove completely |
+| `mandatory` | `true`, `false` | Required for submission |
+| `readOnly` | `true`, `false` | View only, no editing |
+| `roles` | Array of role names | Who this access matrix applies to |
+
+Access can also change dynamically via the `APPLY_ACCESS_MATRIX` predicate action.
+
+---
+
+## Field Types Overview
+
+The `description` property determines what UI component renders:
+
+| Category | Types |
+|----------|-------|
+| **Text Input** | `textfield`, `email`, `phone`, `richtext` |
+| **Selection** | `string_list` (dropdown/radio/checkbox) |
+| **Numbers** | `number`, `rating`, `progress` |
+| **Date/Time** | `timestamp`, `date`, `time`, `duration` |
+| **Media** | `multimedia` (image, video, audio, document) |
+| **Location** | `location`, `geofence` |
+| **Scanning** | `qrcode`, `barcode` |
+| **Structure** | `section` (grouping), `form` (linked form) |
+| **Display Only** | `label` (read-only text/heading) |
+| **Special** | `group_member`, `business_card`, `checklist` |
+
+Each type has specific properties and behaviors—see [Field Types](/docs/concepts/field-types) for details.
+
+---
+
+## Localization
+
+Forms support multiple languages through localization maps:
+
+```json
+{
+  "title": "State",
+  "localisationMap": {
+    "Hindi": { "title": "राज्य" },
+    "Odia": { "title": "ରାଜ୍ୟ" }
+  },
+  "enum": ["Yes", "No"],
+  "enumListLocalisationMap": {
+    "Yes": { "Hindi": "हाँ", "Odia": "ହଁ" },
+    "No": { "Hindi": "नहीं", "Odia": "ନା" }
+  }
+}
+```
+
+---
+
+## What's Next?
+
+Now that you understand the basics, dive deeper:
+
+1. **[Form Structure](/docs/concepts/form-structure)** - Deep dive into FormSchema and SchemaProperty
+2. **[Field Types](/docs/concepts/field-types)** - All 30+ field types explained
+3. **[Field Addressing](/docs/concepts/field-addressing)** - How to reference fields (including `$i`, `$j`, `$k`)
+4. **[Expressions](/docs/concepts/expressions)** - JavaScript formulas and conditions
+5. **[Conditional Logic](/docs/concepts/conditional-logic)** - Predicates in detail
+
+Or jump to **[Recipes](/docs/recipes/)** for practical "how do I...?" guides.
+

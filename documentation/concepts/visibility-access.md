@@ -1,0 +1,632 @@
+# Visibility & Access Control
+
+## The Access Control Model
+
+Every field in a form can have controlled access. The system determines:
+
+1. **Can this user see this field?** (Visibility)
+2. **Can this user edit this field?** (Read-only)
+3. **Must this user fill this field?** (Mandatory)
+
+These decisions are based on:
+- User's role
+- Current workflow state
+- Dynamic conditions (via predicates)
+- Whether it's a new form or an update
+
+---
+
+## AccessMatrix: The Core Structure
+
+```json
+{
+  "accessMatrix": {
+    "visibility": "VISIBLE",
+    "mandatory": true,
+    "readOnly": false,
+    "roles": ["ADMIN", "USER"],
+    "cdr": ["Manager", "Supervisor"],
+    "userIds": ["uuid-1", "uuid-2"],
+    "answer": "default value",
+    "userProfileDriven": false
+  }
+}
+```
+
+Let's understand each property:
+
+### Visibility
+
+Controls whether the field appears at all.
+
+| Value | Effect |
+|-------|--------|
+| `VISIBLE` | Field is shown normally |
+| `INVISIBLE` | Field is hidden but **occupies space** (like CSS `visibility: hidden`) |
+| `GONE` | Field is completely removed from layout (like CSS `display: none`) |
+
+**When to use INVISIBLE vs GONE:**
+- `INVISIBLE`: Maintain layout consistency, field might reappear
+- `GONE`: Field is irrelevant in this context, reclaim space
+
+### Mandatory
+
+When `true`, the field must have a value before form submission.
+
+```json
+{
+  "accessMatrix": {
+    "mandatory": true
+  }
+}
+```
+
+**Important:** A field can be `mandatory: true` but `visibility: "GONE"`. In this case:
+- If the field has a default value, submission succeeds
+- If no default, the form cannot be submitted (usually a configuration error)
+
+### Read-Only
+
+When `true`, the field displays its value but cannot be edited.
+
+```json
+{
+  "accessMatrix": {
+    "readOnly": true
+  }
+}
+```
+
+**Use cases:**
+- Auto-calculated fields
+- System-generated IDs
+- Historical data that shouldn't change
+- Fields locked after certain workflow stages
+
+### Roles
+
+Specifies which user roles this access matrix applies to.
+
+```json
+{
+  "accessMatrix": {
+    "roles": ["ADMIN", "SUPERADMIN", "USER"],
+    "visibility": "VISIBLE"
+  }
+}
+```
+
+**Standard roles:**
+| Role | Typical Use |
+|------|-------------|
+| `ADMIN` | Form administrators |
+| `SUPERADMIN` | System-wide administrators |
+| `USER` | Regular form users |
+| `INITIATOR` | User who created the form answer |
+| `ASSIGNEE` | Current assignee of the form |
+| `ADHOC` | Temporary/one-time users |
+| `CDR` | Company Defined Roles (custom) |
+
+### CDR (Company Defined Roles)
+
+Custom roles specific to your organization:
+
+```json
+{
+  "accessMatrix": {
+    "cdr": ["FieldSupervisor", "AreaManager", "RegionalHead"]
+  }
+}
+```
+
+These are defined at the company level and can be assigned to users.
+
+### User IDs
+
+For very specific access, list individual user UUIDs:
+
+```json
+{
+  "accessMatrix": {
+    "userIds": [
+      "d9098729-5658-4ec6-a4bc-f61d0c846832",
+      "c833b30c-7a36-4e78-9496-4a255a10745b"
+    ]
+  }
+}
+```
+
+**Use sparingly**—role-based access is more maintainable.
+
+### Default Answer
+
+Pre-populate the field with a default value:
+
+```json
+{
+  "accessMatrix": {
+    "answer": "India",
+    "readOnly": true
+  }
+}
+```
+
+Useful for:
+- Country fields defaulting to the deployment country
+- Status fields starting as "Draft"
+- System fields with constant values
+
+### User Profile Driven
+
+When `true`, populate this field from the user's profile:
+
+```json
+{
+  "accessMatrix": {
+    "userProfileDriven": true
+  }
+}
+```
+
+Combined with `userProfileKey` on the SchemaProperty:
+
+```json
+{
+  "title": "Your Department",
+  "userProfileKey": "department",
+  "accessMatrix": {
+    "userProfileDriven": true,
+    "readOnly": true
+  }
+}
+```
+
+---
+
+## Form-Level Access Matrices
+
+Forms have two sets of access rules:
+
+### initAccessMatrices
+
+Applied when **creating** a new form answer:
+
+```json
+{
+  "initAccessMatrices": [
+    {
+      "roles": ["USER", "ADMIN"],
+      "visibility": "VISIBLE",
+      "mandatory": true,
+      "readOnly": false
+    }
+  ]
+}
+```
+
+### updateAccessMatrices
+
+Applied when **editing** an existing form answer:
+
+```json
+{
+  "updateAccessMatrices": [
+    {
+      "roles": ["ADMIN"],
+      "visibility": "VISIBLE",
+      "readOnly": false
+    },
+    {
+      "roles": ["USER"],
+      "visibility": "VISIBLE",
+      "readOnly": true
+    }
+  ]
+}
+```
+
+**Why separate?**
+
+Consider a "Created By" field:
+- On creation: Hidden (system fills it automatically)
+- On update: Visible but read-only (see who created, can't change)
+
+Or an "Approval Status" field:
+- On creation: Hidden (no status yet)
+- On update: Visible for admins to change, read-only for users
+
+---
+
+## Dynamic Access with Predicates
+
+Static access matrices handle most cases, but sometimes access depends on the data itself.
+
+### APPLY_ACCESS_MATRIX Action
+
+Change access dynamically based on conditions:
+
+```json
+{
+  "title": "Spouse Information",
+  "type": "object",
+  "description": "section",
+  "accessMatrix": {
+    "visibility": "GONE"
+  },
+  "predicates": [
+    {
+      "condition": "this.maritalStatus == 'Married'",
+      "action": "APPLY_ACCESS_MATRIX",
+      "actionConfig": {
+        "accessMatrix": {
+          "visibility": "VISIBLE",
+          "mandatory": true
+        }
+      }
+    },
+    {
+      "condition": "this.maritalStatus != 'Married'",
+      "action": "APPLY_ACCESS_MATRIX",
+      "actionConfig": {
+        "accessMatrix": {
+          "visibility": "GONE"
+        }
+      }
+    }
+  ]
+}
+```
+
+### Common Dynamic Access Patterns
+
+**Pattern 1: Show field based on another field's value**
+
+```json
+{
+  "title": "Other Reason",
+  "accessMatrix": { "visibility": "GONE" },
+  "predicates": [{
+    "condition": "this.reason == 'Other'",
+    "action": "APPLY_ACCESS_MATRIX",
+    "actionConfig": {
+      "accessMatrix": { "visibility": "VISIBLE", "mandatory": true }
+    }
+  }]
+}
+```
+
+**Pattern 2: Lock field after certain status**
+
+```json
+{
+  "title": "Initial Assessment",
+  "predicates": [{
+    "condition": "this.status == 'Approved' || this.status == 'Rejected'",
+    "action": "APPLY_ACCESS_MATRIX",
+    "actionConfig": {
+      "accessMatrix": { "readOnly": true }
+    }
+  }]
+}
+```
+
+**Pattern 3: Role + Condition combination**
+
+```json
+{
+  "title": "Discount Percentage",
+  "predicates": [{
+    "condition": "this.orderTotal > 100000",
+    "action": "APPLY_ACCESS_MATRIX",
+    "actionConfig": {
+      "accessMatrix": {
+        "visibility": "VISIBLE",
+        "roles": ["MANAGER", "ADMIN"]
+      }
+    }
+  }]
+}
+```
+
+---
+
+## View Mode vs Fill Mode
+
+Access can differ between viewing a submitted form and filling/editing:
+
+### viewModeVisibility
+
+Controls visibility when **viewing** (not editing) a form answer:
+
+```json
+{
+  "accessMatrix": {
+    "visibility": "VISIBLE",
+    "viewModeVisibility": "GONE"
+  }
+}
+```
+
+**Example use case:** A "Notes to Self" field
+- While filling: Visible (user can write notes)
+- After submission (view mode): Hidden (private to the user)
+
+---
+
+## Resolution Order
+
+When multiple access rules apply, the system resolves in this order:
+
+1. **Check user role** - Does the user match any role in the access matrix?
+2. **Check CDR** - Does the user have any specified company-defined roles?
+3. **Check user ID** - Is the user's ID specifically listed?
+4. **Apply base access** - Use the field's accessMatrix
+5. **Apply predicates** - Evaluate and apply any APPLY_ACCESS_MATRIX predicates
+6. **Merge form-level** - Combine with initAccessMatrices or updateAccessMatrices
+
+**Important:** More specific rules override general ones:
+- User ID > CDR > Role
+- Predicate result > Static accessMatrix
+- Field-level > Form-level
+
+---
+
+## Access Matrix Inheritance
+
+Sections (objects) and their children have an inheritance relationship:
+
+```json
+{
+  "parentSection": {
+    "type": "object",
+    "description": "section",
+    "accessMatrix": {
+      "visibility": "GONE"
+    },
+    "properties": {
+      "childField": {
+        "accessMatrix": {
+          "visibility": "VISIBLE"
+        }
+      }
+    }
+  }
+}
+```
+
+**Behavior:** If the parent is `GONE`, children are hidden regardless of their own visibility.
+
+Think of it as: Parent visibility is a gate. If the gate is closed (GONE), nothing inside is visible.
+
+---
+
+## Practical Examples
+
+### Example 1: Progressive Disclosure Form
+
+Show more fields as user provides information:
+
+```json
+{
+  "basicInfo": {
+    "title": "Basic Information",
+    "properties": {
+      "name": { "accessMatrix": { "mandatory": true } },
+      "email": { "accessMatrix": { "mandatory": true } },
+      "wantNewsletter": { "type": "boolean" }
+    }
+  },
+  "newsletterPreferences": {
+    "title": "Newsletter Preferences",
+    "accessMatrix": { "visibility": "GONE" },
+    "predicates": [{
+      "condition": "this.basicInfo.wantNewsletter == true",
+      "action": "APPLY_ACCESS_MATRIX",
+      "actionConfig": {
+        "accessMatrix": { "visibility": "VISIBLE" }
+      }
+    }],
+    "properties": {
+      "frequency": { ... },
+      "topics": { ... }
+    }
+  }
+}
+```
+
+### Example 2: Role-Based Field Access
+
+Different users see different fields:
+
+```json
+{
+  "customerPrice": {
+    "title": "Customer Price",
+    "accessMatrix": {
+      "visibility": "VISIBLE",
+      "roles": ["USER", "ADMIN"]
+    }
+  },
+  "costPrice": {
+    "title": "Cost Price",
+    "accessMatrix": {
+      "visibility": "VISIBLE",
+      "roles": ["ADMIN"]
+    }
+  },
+  "profitMargin": {
+    "title": "Profit Margin",
+    "accessMatrix": {
+      "visibility": "VISIBLE",
+      "roles": ["ADMIN"],
+      "readOnly": true
+    },
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "((this.customerPrice - this.costPrice) / this.costPrice) * 100"
+      }
+    }]
+  }
+}
+```
+
+- Regular users see: Customer Price only
+- Admins see: Customer Price, Cost Price, and calculated Profit Margin
+
+### Example 3: Workflow-Stage Access
+
+Lock fields based on workflow progress:
+
+```json
+{
+  "initialAssessment": {
+    "title": "Initial Assessment",
+    "predicates": [{
+      "condition": "this._$status != 'Draft'",
+      "action": "APPLY_ACCESS_MATRIX",
+      "actionConfig": {
+        "accessMatrix": { "readOnly": true }
+      }
+    }]
+  },
+  "managerReview": {
+    "title": "Manager Review",
+    "accessMatrix": {
+      "visibility": "GONE",
+      "roles": ["MANAGER", "ADMIN"]
+    },
+    "predicates": [{
+      "condition": "this._$status == 'Pending Review' || this._$status == 'Approved'",
+      "action": "APPLY_ACCESS_MATRIX",
+      "actionConfig": {
+        "accessMatrix": { "visibility": "VISIBLE" }
+      }
+    }]
+  }
+}
+```
+
+---
+
+## Common Mistakes
+
+### Mistake 1: Forgetting the Else Case
+
+```json
+// Wrong - field stays visible even when condition becomes false
+{
+  "predicates": [{
+    "condition": "this.showDetails == true",
+    "action": "APPLY_ACCESS_MATRIX",
+    "actionConfig": { "accessMatrix": { "visibility": "VISIBLE" } }
+  }]
+}
+
+// Right - explicitly handle both cases
+{
+  "accessMatrix": { "visibility": "GONE" },
+  "predicates": [{
+    "condition": "this.showDetails == true",
+    "action": "APPLY_ACCESS_MATRIX",
+    "actionConfig": { "accessMatrix": { "visibility": "VISIBLE" } }
+  }]
+}
+```
+
+### Mistake 2: Conflicting Access Rules
+
+```json
+// Confusing - mandatory but gone?
+{
+  "accessMatrix": {
+    "visibility": "GONE",
+    "mandatory": true
+  }
+}
+```
+
+This creates a validation trap—field is required but user can't fill it.
+
+### Mistake 3: Over-Relying on User IDs
+
+```json
+// Hard to maintain
+{
+  "accessMatrix": {
+    "userIds": ["uuid1", "uuid2", "uuid3", ...]
+  }
+}
+```
+
+Use roles instead—they're manageable and survive personnel changes.
+
+---
+
+## Security Considerations
+
+### Client-Side Is Not Security
+
+Access control on the client is for **UX**, not **security**. A determined user can:
+- Inspect the full schema in browser tools
+- Send API requests directly
+- Modify client-side JavaScript
+
+**Always validate access on the server.**
+
+### Sensitive Data
+
+For truly sensitive fields (SSN, financial data):
+1. Don't send the value to unauthorized clients
+2. Mask values in responses
+3. Server-side validation of access on every request
+
+---
+
+## Quick Reference
+
+```json
+{
+  "accessMatrix": {
+    // Visibility
+    "visibility": "VISIBLE | INVISIBLE | GONE",
+    "viewModeVisibility": "VISIBLE | INVISIBLE | GONE",
+    
+    // Editability
+    "readOnly": true | false,
+    "mandatory": true | false,
+    
+    // Who
+    "roles": ["ADMIN", "USER", "SUPERADMIN", "INITIATOR", "ASSIGNEE"],
+    "cdr": ["CustomRole1", "CustomRole2"],
+    "userIds": ["uuid1", "uuid2"],
+    
+    // Defaults
+    "answer": "default value",
+    "defaultMediaName": "filename.jpg",
+    "userProfileDriven": true | false
+  }
+}
+```
+
+**Dynamic Access:**
+```json
+{
+  "predicates": [{
+    "condition": "expression",
+    "action": "APPLY_ACCESS_MATRIX",
+    "actionConfig": {
+      "accessMatrix": { ... }
+    }
+  }]
+}
+```
+
+---
+
+## Next Steps
+
+- **[Conditional Logic](conditional-logic.md)** - More on predicates
+- **[Localization](localization.md)** - Multi-language access
+- **[Recipes: Conditional Visibility](../recipes/conditional-visibility.md)** - Practical examples
+

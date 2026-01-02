@@ -1,0 +1,132 @@
+{
+  "$schema": "form-schema-v2",
+  "title": "Selection Form",
+  "description": "Tests string_list with various layouts: dropdown, radio, checkbox, pills",
+  "type": "object",
+  "properties": {
+    "country": {
+      "title": "Country",
+      "type": "string",
+      "description": "string_list",
+      "hint": "Select your country of residence",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "enum": ["India", "USA", "UK", "Canada", "Australia", "Germany", "France", "Japan"],
+      "sortOptions": true
+    },
+    "gender": {
+      "title": "Gender",
+      "type": "string",
+      "description": "string_list",
+      "layout": "radio",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "enum": ["Male", "Female", "Other", "Prefer not to say"]
+    },
+    "hasVehicle": {
+      "title": "Do you own a vehicle?",
+      "type": "string",
+      "description": "string_list",
+      "layout": "radio",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "enum": ["Yes", "No"],
+      "dependentKeys": ["vehicleType"]
+    },
+    "vehicleType": {
+      "title": "Vehicle Type",
+      "type": "string",
+      "description": "string_list",
+      "layout": "small_pill",
+      "accessMatrix": {
+        "mandatory": false,
+        "visibility": "VISIBLE"
+      },
+      "enum": ["Car", "Motorcycle", "Scooter", "Bicycle", "Truck"],
+      "predicates": [{
+        "action": "VISIBILITY",
+        "actionConfig": {
+          "expression": "formAnswer.hasVehicle === 'Yes'"
+        }
+      }]
+    },
+    "skills": {
+      "title": "Your Skills",
+      "type": "array",
+      "description": "string_list",
+      "layout": "checkbox",
+      "hint": "Select all that apply",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "enum": ["JavaScript", "Python", "Java", "Kotlin", "Swift", "Go", "Rust", "C++"],
+      "minRows": 1,
+      "maxRows": 5,
+      "validationMessage": "Select between 1 and 5 skills"
+    },
+    "experienceLevel": {
+      "title": "Experience Level",
+      "type": "string",
+      "description": "string_list",
+      "layout": "large_pill",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "enum": ["Beginner", "Intermediate", "Advanced", "Expert"]
+    },
+    "preferredLanguage": {
+      "title": "Preferred Language",
+      "type": "string",
+      "description": "string_list",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "enum": ["English", "Hindi", "Spanish", "French", "German", "Japanese", "Chinese"],
+      "localisationMap": {
+        "Hindi": {
+          "title": "पसंदीदा भाषा"
+        }
+      },
+      "enumListLocalisationMap": {
+        "English": { "Hindi": "अंग्रेज़ी" },
+        "Hindi": { "Hindi": "हिंदी" },
+        "Spanish": { "Hindi": "स्पेनिश" }
+      }
+    },
+    "interests": {
+      "title": "Interests",
+      "type": "array",
+      "description": "string_list",
+      "layout": "small_pill",
+      "hint": "Select your hobbies and interests",
+      "accessMatrix": {
+        "mandatory": false,
+        "visibility": "VISIBLE"
+      },
+      "enum": ["Sports", "Music", "Travel", "Technology", "Art", "Gaming", "Reading", "Cooking"],
+      "allowWildcardSelect": true,
+      "selectAllButtonText": "Select All"
+    }
+  },
+  "order": [
+    "country",
+    "gender",
+    "hasVehicle",
+    "vehicleType",
+    "experienceLevel",
+    "skills",
+    "preferredLanguage",
+    "interests"
+  ],
+  "required": ["country", "gender", "hasVehicle", "experienceLevel", "skills", "preferredLanguage"]
+}
+

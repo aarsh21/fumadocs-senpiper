@@ -1,0 +1,104 @@
+---
+title: "Field Types Reference"
+description: "This section documents each field type (`description` value), its purpose, and the properties it consumes."
+---
+
+
+This section documents each field type (`description` value), its purpose, and the properties it consumes.
+
+> **Note to Team:** Please verify the properties listed and add any missing ones.
+
+---
+
+## Field Type Categories
+
+### Text Input
+| Type | Description |
+|------|-------------|
+| [textfield](textfield) | Single-line text input |
+| [email](email) | Email input with validation |
+| [phone](phone) | Phone number input |
+| [richtext](richtext) | Multi-line formatted text |
+
+### Selection
+| Type | Description |
+|------|-------------|
+| [string_list](string-list) | Dropdown, radio, or checkbox selection |
+
+### Numeric
+| Type | Description |
+|------|-------------|
+| [number](number) | Numeric input |
+| [rating](rating) | Star rating |
+| [progress](progress) | Progress indicator |
+
+### Date & Time
+| Type | Description |
+|------|-------------|
+| [timestamp](timestamp) | Date and time picker |
+| [date](date) | Date only picker |
+| [time](time) | Time only picker |
+| [duration](duration) | Duration input |
+
+### Media
+| Type | Description |
+|------|-------------|
+| [multimedia](multimedia) | Image, video, audio, document upload |
+
+### Location
+| Type | Description |
+|------|-------------|
+| [location](location) | GPS location capture |
+| [geofence](geofence) | Location with boundary validation |
+
+### Scanning
+| Type | Description |
+|------|-------------|
+| [qrcode](qrcode) | QR code scanner |
+| [barcode](barcode) | Barcode scanner |
+
+### Structure
+| Type | Description |
+|------|-------------|
+| [section](section) | Field grouping / repeating sections |
+| [form](form) | Linked form reference |
+
+### Display Only
+| Type | Description |
+|------|-------------|
+| [label](label) | Non-interactive text display |
+
+### Special
+| Type | Description |
+|------|-------------|
+| [group_member](group-member) | User selection |
+| [checklist](checklist) | Multi-item checklist |
+| [business_card](business-card) | Business card OCR |
+| [separated_input](separated-input) | Segmented input (OTP style) |
+| [object_detection](object-detection) | Image object detection |
+| [text_extraction](text-extraction) | OCR text extraction |
+
+---
+
+## How to Read These Pages
+
+Each field type page includes:
+
+1. **Purpose** - What the field is for
+2. **Data Type** - The `type` value to use
+3. **Consumed Properties** - Properties this field uses
+4. **Layout Variants** - Available `layout` values
+5. **Answer Structure** - How the answer is stored
+6. **Example** - Complete schema example
+7. **Behavior Notes** - Special behaviors to know
+
+---
+
+## Contributing
+
+When adding documentation:
+1. Use the template structure
+2. Include at least one working example
+3. Note any platform differences (iOS vs Android vs Web)
+4. Document edge cases
+

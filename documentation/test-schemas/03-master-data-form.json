@@ -1,0 +1,180 @@
+{
+  "$schema": "form-schema-v2",
+  "title": "Master Data Form",
+  "description": "Tests string_list with master data, cascading dropdowns, OPTION_FILTER, filterStringExpression",
+  "type": "object",
+  "properties": {
+    "state": {
+      "title": "State",
+      "type": "string",
+      "description": "string_list",
+      "hint": "Select your state",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "masterId": "70311147-2fcc-489c-9981-8f374361a229",
+      "masterName": "Location Master",
+      "masterType": "FORM",
+      "groupId": "group-uuid-placeholder",
+      "columnKey": "s",
+      "columnName": "State",
+      "dependentKeys": ["district", "locationKey"],
+      "enableOfflineOptionFilterMaster": true,
+      "enum": []
+    },
+    "district": {
+      "title": "District",
+      "type": "string",
+      "description": "string_list",
+      "hint": "Select your district",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "masterId": "70311147-2fcc-489c-9981-8f374361a229",
+      "masterName": "Location Master",
+      "masterType": "FORM",
+      "groupId": "group-uuid-placeholder",
+      "columnKey": "d",
+      "columnName": "District",
+      "dependentKeys": ["block", "locationKey"],
+      "predicates": [{
+        "action": "OPTION_FILTER",
+        "actionConfig": {
+          "field": "state"
+        }
+      }],
+      "enableOfflineOptionFilterMaster": true,
+      "enum": []
+    },
+    "block": {
+      "title": "Block",
+      "type": "string",
+      "description": "string_list",
+      "hint": "Select your block",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "masterId": "70311147-2fcc-489c-9981-8f374361a229",
+      "masterName": "Location Master",
+      "masterType": "FORM",
+      "groupId": "group-uuid-placeholder",
+      "columnKey": "b",
+      "columnName": "Block",
+      "dependentKeys": ["village", "locationKey"],
+      "predicates": [{
+        "action": "OPTION_FILTER",
+        "actionConfig": {
+          "field": "district"
+        }
+      }],
+      "enableOfflineOptionFilterMaster": true,
+      "enum": []
+    },
+    "village": {
+      "title": "Village",
+      "type": "string",
+      "description": "string_list",
+      "hint": "Select your village",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "masterId": "70311147-2fcc-489c-9981-8f374361a229",
+      "masterName": "Location Master",
+      "masterType": "FORM",
+      "groupId": "group-uuid-placeholder",
+      "columnKey": "v",
+      "columnName": "Village",
+      "dependentKeys": ["locationKey"],
+      "predicates": [{
+        "action": "OPTION_FILTER",
+        "actionConfig": {
+          "field": "block"
+        }
+      }],
+      "enableOfflineOptionFilterMaster": true,
+      "enum": []
+    },
+    "locationKey": {
+      "title": "Location Key",
+      "type": "string",
+      "description": "textfield",
+      "accessMatrix": {
+        "readOnly": true,
+        "visibility": "VISIBLE"
+      },
+      "formulaKeys": ["state", "district", "block", "village"],
+      "predicates": [{
+        "action": "CALC",
+        "actionConfig": {
+          "formula": "(this.state || '') + '-' + (this.district || '') + '-' + (this.block || '') + '-' + (this.village || '')"
+        }
+      }]
+    },
+    "product": {
+      "title": "Product",
+      "type": "string",
+      "description": "string_list",
+      "hint": "Search for a product",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "masterId": "product-master-uuid-placeholder",
+      "masterName": "Product Master",
+      "masterType": "FORM",
+      "groupId": "group-uuid-placeholder",
+      "columnKey": "productCode",
+      "columnName": "Product Code",
+      "searchableKeys": ["productCode", "productName"],
+      "filterStringExpression": "row.isActive === true && row.stock > 0",
+      "enableOnlineSearchableMaster": false,
+      "enum": []
+    },
+    "filteredProduct": {
+      "title": "Filtered Product (by Category)",
+      "type": "string",
+      "description": "string_list",
+      "hint": "Only shows products matching selected category",
+      "accessMatrix": {
+        "mandatory": false,
+        "visibility": "VISIBLE"
+      },
+      "masterId": "product-master-uuid-placeholder",
+      "masterName": "Product Master",
+      "masterType": "FORM",
+      "groupId": "group-uuid-placeholder",
+      "columnKey": "productCode",
+      "columnName": "Product Code",
+      "searchableKeys": ["productCode", "productName"],
+      "filterStringExpression": "row.category === formAnswer.selectedCategory && row.isActive === true",
+      "enum": []
+    },
+    "selectedCategory": {
+      "title": "Filter by Category",
+      "type": "string",
+      "description": "string_list",
+      "accessMatrix": {
+        "mandatory": false,
+        "visibility": "VISIBLE"
+      },
+      "enum": ["Electronics", "Clothing", "Food", "Furniture"],
+      "dependentKeys": ["filteredProduct"]
+    }
+  },
+  "order": [
+    "state",
+    "district",
+    "block",
+    "village",
+    "locationKey",
+    "selectedCategory",
+    "filteredProduct",
+    "product"
+  ],
+  "required": ["state", "district", "block", "village", "product"]
+}
+

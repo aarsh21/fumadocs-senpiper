@@ -1,0 +1,170 @@
+{
+  "$schema": "form-schema-v2",
+  "title": "Date/Time Form",
+  "description": "Tests timestamp, date, time fields with various constraints and formats",
+  "type": "object",
+  "properties": {
+    "appointmentDate": {
+      "title": "Appointment Date",
+      "type": "string",
+      "description": "timestamp",
+      "hint": "Select your preferred appointment date and time",
+      "format": "dd MMM yyyy HH:mm",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      }
+    },
+    "birthDate": {
+      "title": "Date of Birth",
+      "type": "string",
+      "description": "date",
+      "hint": "Your date of birth",
+      "format": "dd/MM/yyyy",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "minimum": -36500,
+      "maximum": 0,
+      "timeUnit": "DAY",
+      "validationMessage": "Birth date must be in the past",
+      "dependentKeys": ["calculatedAge"]
+    },
+    "calculatedAge": {
+      "title": "Calculated Age",
+      "type": "number",
+      "description": "number",
+      "suffixText": " years",
+      "accessMatrix": {
+        "readOnly": true,
+        "visibility": "VISIBLE"
+      },
+      "formulaKeys": ["birthDate"],
+      "predicates": [{
+        "action": "CALC",
+        "actionConfig": {
+          "formula": "Math.floor((Date.now() - new Date(this.birthDate)) / (365.25 * 24 * 60 * 60 * 1000))"
+        }
+      }]
+    },
+    "visitDate": {
+      "title": "Visit Date",
+      "type": "string",
+      "description": "date",
+      "hint": "Must be within next 30 days",
+      "format": "dd MMM yyyy",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "minimum": 0,
+      "maximum": 30,
+      "timeUnit": "DAY",
+      "validationMessage": "Visit date must be within the next 30 days"
+    },
+    "startTime": {
+      "title": "Start Time",
+      "type": "string",
+      "description": "time",
+      "format": "HH:mm",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "dependentKeys": ["endTime", "duration"]
+    },
+    "endTime": {
+      "title": "End Time",
+      "type": "string",
+      "description": "time",
+      "format": "HH:mm",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "dependentKeys": ["duration"],
+      "validationMessage": "End time must be after start time"
+    },
+    "duration": {
+      "title": "Duration",
+      "type": "string",
+      "description": "textfield",
+      "accessMatrix": {
+        "readOnly": true,
+        "visibility": "VISIBLE"
+      },
+      "formulaKeys": ["startTime", "endTime"],
+      "predicates": [{
+        "action": "CALC",
+        "actionConfig": {
+          "formula": "(() => { if (!this.startTime || !this.endTime) return ''; const [sh, sm] = this.startTime.split(':').map(Number); const [eh, em] = this.endTime.split(':').map(Number); const diff = (eh * 60 + em) - (sh * 60 + sm); if (diff < 0) return 'Invalid'; const hours = Math.floor(diff / 60); const mins = diff % 60; return hours + 'h ' + mins + 'm'; })()"
+        }
+      }]
+    },
+    "createdAt": {
+      "title": "Created At",
+      "type": "string",
+      "description": "timestamp",
+      "format": "dd MMM yyyy HH:mm:ss",
+      "systemTime": true,
+      "accessMatrix": {
+        "readOnly": true,
+        "visibility": "VISIBLE"
+      }
+    },
+    "serverTimestamp": {
+      "title": "Server Timestamp",
+      "type": "string",
+      "description": "timestamp",
+      "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+      "systemTime": true,
+      "generateSystemTimeAtServer": true,
+      "accessMatrix": {
+        "readOnly": true,
+        "visibility": "HIDDEN"
+      }
+    },
+    "eventSchedule": {
+      "title": "Event Schedule",
+      "type": "string",
+      "description": "timestamp",
+      "format": "dd MMM yyyy HH:mm",
+      "hint": "This will be added to your calendar",
+      "enableEventScheduling": true,
+      "accessMatrix": {
+        "mandatory": false,
+        "visibility": "VISIBLE"
+      }
+    },
+    "followUpDate": {
+      "title": "Follow-up Date",
+      "type": "string",
+      "description": "date",
+      "hint": "Must be 7-14 days after visit date",
+      "format": "dd MMM yyyy",
+      "accessMatrix": {
+        "mandatory": false,
+        "visibility": "VISIBLE"
+      },
+      "minimum": 7,
+      "maximum": 14,
+      "timeUnit": "DAY",
+      "validationMessage": "Follow-up must be 7-14 days after today"
+    }
+  },
+  "order": [
+    "appointmentDate",
+    "birthDate",
+    "calculatedAge",
+    "visitDate",
+    "startTime",
+    "endTime",
+    "duration",
+    "createdAt",
+    "eventSchedule",
+    "followUpDate"
+  ],
+  "required": ["appointmentDate", "birthDate", "visitDate", "startTime", "endTime"]
+}
+

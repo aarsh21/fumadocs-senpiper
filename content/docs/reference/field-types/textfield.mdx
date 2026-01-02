@@ -1,0 +1,159 @@
+---
+title: "textfield"
+description: "Purpose"
+---
+
+
+## Purpose
+
+Single-line text input for names, IDs, short text, and general string data.
+
+---
+
+## Configuration
+
+**Data Type:** `type: "string"`
+
+**Description:** `description: "textfield"`
+
+---
+
+## Consumed Properties
+
+### Standard Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `title` | string | Field label |
+| `hint` | string | Help text |
+| `placeholder` | string | Placeholder text |
+| `accessMatrix` | object | Visibility, mandatory, readOnly |
+| `predicates` | array | Conditional logic |
+| `dependentKeys` | string[] | Fields that depend on this |
+| `formulaKeys` | string[] | Fields used in calculations |
+| `localisationMap` | object | Translations |
+
+### Validation Properties
+| Property | Type | Purpose | Example |
+|----------|------|---------|---------|
+| `pattern` | string (regex) | Validation pattern | `"^[A-Za-z ]+$"` |
+| `validationMessage` | string | Error message | `"Only letters allowed"` |
+| `minSize` | integer | Minimum characters | `3` |
+| `maxSize` | integer | Maximum characters | `100` |
+
+### Display Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `prefixText` | string | Text before input |
+| `suffixText` | string | Text after input |
+| `titleDisplayConfiguration` | object | Title styling |
+
+### Auto-Generation Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `autoGenerate` | boolean | Enable auto-generation |
+| `autoGenerateConfig` | object | Auto-generation configuration |
+
+### Special Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `renderAsMd` | boolean | Render as Markdown |
+| `otpValidation` | string | OTP verification (`"REQUESTED"`, `"MANDATORY"`) |
+| `otpConfig` | object | OTP configuration |
+
+> **Team: Please verify** - Are there other properties specific to textfield?
+
+---
+
+## Layout Variants
+
+None - textfield is always single-line. Use `richtext` for multi-line.
+
+---
+
+## Answer Structure
+
+```json
+{
+  "fieldKey": "John Doe"
+}
+```
+
+Simple string value.
+
+---
+
+## Example
+
+### Basic Text Field
+```json
+{
+  "name": {
+    "title": "Full Name",
+    "type": "string",
+    "description": "textfield",
+    "hint": "Enter your name as it appears on ID",
+    "placeholder": "e.g., John Doe",
+    "accessMatrix": {
+      "mandatory": true,
+      "visibility": "VISIBLE"
+    }
+  }
+}
+```
+
+### With Pattern Validation
+```json
+{
+  "pincode": {
+    "title": "PIN Code",
+    "type": "string",
+    "description": "textfield",
+    "pattern": "^[0-9]{6}$",
+    "validationMessage": "Enter valid 6-digit PIN code",
+    "maxSize": 6
+  }
+}
+```
+
+### Auto-Generated ID
+```json
+{
+  "surveyId": {
+    "title": "Survey ID",
+    "type": "string",
+    "description": "textfield",
+    "autoGenerate": true,
+    "autoGenerateConfig": {
+      "components": [
+        { "type": "literal", "value": "SRV-" },
+        { "type": "sequence", "format": "00000" }
+      ]
+    },
+    "accessMatrix": {
+      "readOnly": true
+    }
+  }
+}
+```
+
+---
+
+## Behavior Notes
+
+1. **Single line only** - For multi-line, use `richtext`
+2. **Pattern validation** - Runs on blur and before submission
+3. **Auto-generation** - Happens before predicates if `generateBeforePredicate: true`
+4. **Max size** - Enforced at input level (can't type beyond limit)
+
+---
+
+## Platform Differences
+
+> **Team: Please document any platform-specific behaviors**
+
+| Platform | Behavior |
+|----------|----------|
+| Android | ? |
+| iOS | ? |
+| Web | ? |
+

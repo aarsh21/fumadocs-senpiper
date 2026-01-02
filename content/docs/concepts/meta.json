@@ -1,0 +1,16 @@
+{
+  "title": "Core Concepts",
+  "pages": [
+    "form-structure",
+    "field-types",
+    "data-binding",
+    "field-addressing",
+    "expressions",
+    "conditional-logic",
+    "master-data",
+    "visibility-access",
+    "field-appearance",
+    "property-cascading",
+    "localization"
+  ]
+}

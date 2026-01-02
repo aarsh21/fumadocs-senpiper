@@ -1,0 +1,301 @@
+---
+title: "section"
+description: "Purpose"
+---
+
+
+## Purpose
+
+Groups related fields together. Can be:
+- **Simple section** (type: object) - Static grouping
+- **Repeating section** (type: array) - Dynamic rows that users can add/remove
+
+---
+
+## Configuration
+
+**Data Type:** 
+- `type: "object"` for simple section
+- `type: "array"` for repeating section
+
+**Description:** `description: "section"`
+
+---
+
+## Consumed Properties
+
+### Standard Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `title` | string | Section header |
+| `hint` | string | Help text |
+| `accessMatrix` | object | Visibility, mandatory, readOnly |
+| `predicates` | array | Conditional logic |
+| `dependentKeys` | string[] | Fields that depend on this |
+| `localisationMap` | object | Translations |
+
+### Structure Properties (Object)
+| Property | Type | Purpose |
+|----------|------|---------|
+| `properties` | object | Child field definitions |
+| `order` | string[] | Display order of children |
+| `required` | string[] | Required child keys |
+
+### Structure Properties (Array)
+| Property | Type | Purpose |
+|----------|------|---------|
+| `items` | SchemaProperty | Template for each row |
+| `minRows` | integer | Minimum rows required |
+| `maxRows` | integer | Maximum rows allowed |
+
+### Layout Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `layout` | string | Visual variant (see below) |
+| `webLayout` | string | Web-specific layout |
+
+### Repeating Section Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `newRowLabel` | string | "Add row" button text |
+| `hideAddNewRowButton` | boolean | Hide add button |
+| `keysForRowHeader` | string[] | Fields for row summary |
+| `immutableRowCount` | boolean | Prevent add/remove |
+| `excludedFieldsForCopiedRow` | string[] | Fields to clear on copy |
+| `allowPagination` | boolean | Enable pagination |
+| `useLastValue` | boolean | Copy previous row values |
+
+### Display Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `rowHeaderDisplayConfiguration` | object | Row header styling |
+| `sectionArrayConfiguration` | object | Table column config |
+| `titleDisplayConfiguration` | object | Title styling |
+
+---
+
+## Layout Variants
+
+| Value | Appearance |
+|-------|------------|
+| (none) | Simple grouped fields |
+| `accordion` | Collapsible section |
+| `expandable` | Starts collapsed |
+| `collapsible` | Can be collapsed |
+| `expanded` | Starts expanded |
+| `collapsed` | Starts collapsed |
+| `tab` | Tab-based view |
+| `card` | Card container |
+| `table` | Table layout (arrays) |
+| `inline` | Inline display |
+| `book` | Book-style pages |
+
+---
+
+## Answer Structure
+
+### Simple Section (Object)
+```json
+{
+  "address": {
+    "street": "123 Main St",
+    "city": "Mumbai",
+    "pincode": "400001"
+  }
+}
+```
+
+### Repeating Section (Array)
+```json
+{
+  "familyMembers": [
+    { "name": "Jane", "relation": "Spouse", "age": 35 },
+    { "name": "John Jr", "relation": "Child", "age": 8 }
+  ]
+}
+```
+
+---
+
+## Examples
+
+### Simple Section
+```json
+{
+  "contactInfo": {
+    "title": "Contact Information",
+    "type": "object",
+    "description": "section",
+    "properties": {
+      "email": {
+        "title": "Email",
+        "type": "string",
+        "description": "email"
+      },
+      "phone": {
+        "title": "Phone",
+        "type": "string",
+        "description": "phone"
+      }
+    },
+    "order": ["email", "phone"]
+  }
+}
+```
+
+### Collapsible Section
+```json
+{
+  "additionalInfo": {
+    "title": "Additional Information",
+    "type": "object",
+    "description": "section",
+    "layout": "accordion",
+    "properties": { ... }
+  }
+}
+```
+
+### Repeating Section
+```json
+{
+  "familyMembers": {
+    "title": "Family Members",
+    "type": "array",
+    "description": "section",
+    "items": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string",
+          "description": "textfield"
+        },
+        "relation": {
+          "title": "Relation",
+          "type": "string",
+          "description": "string_list",
+          "enum": ["Spouse", "Child", "Parent"]
+        }
+      },
+      "order": ["name", "relation"]
+    },
+    "minRows": 1,
+    "maxRows": 10,
+    "newRowLabel": "Add Family Member"
+  }
+}
+```
+
+### Table Layout
+```json
+{
+  "lineItems": {
+    "title": "Line Items",
+    "type": "array",
+    "description": "section",
+    "layout": "table",
+    "items": {
+      "type": "object",
+      "properties": {
+        "product": { "title": "Product", "type": "string" },
+        "qty": { "title": "Qty", "type": "number" },
+        "price": { "title": "Price", "type": "number" }
+      }
+    }
+  }
+}
+```
+
+### Pre-filled Rows
+```json
+{
+  "checklist": {
+    "title": "Checklist",
+    "type": "array",
+    "description": "section",
+    "items": {
+      "type": "object",
+      "properties": {
+        "item": { "type": "string" },
+        "done": { "type": "boolean" }
+      }
+    },
+    "accessMatrix": {
+      "answer": [
+        { "item": "Check item 1", "done": false },
+        { "item": "Check item 2", "done": false }
+      ]
+    },
+    "immutableRowCount": true
+  }
+}
+```
+
+### Row Headers
+```json
+{
+  "orders": {
+    "type": "array",
+    "description": "section",
+    "layout": "accordion",
+    "keysForRowHeader": ["orderNumber", "customerName"],
+    "items": { ... }
+  }
+}
+```
+
+Shows "ORD-001 - John Doe" as collapsed row header.
+
+---
+
+## Calculations in Arrays
+
+Use `$i` for current row index:
+
+```json
+{
+  "items": {
+    "type": "array",
+    "items": {
+      "properties": {
+        "qty": { "dependentKeys": ["total"] },
+        "price": { "dependentKeys": ["total"] },
+        "total": {
+          "formulaKeys": ["qty", "price"],
+          "predicates": [{
+            "action": "CALC",
+            "actionConfig": {
+              "formula": "this.items[$i].qty * this.items[$i].price"
+            }
+          }]
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+## Behavior Notes
+
+1. **Nesting** - Sections can contain sections (but avoid deep nesting)
+2. **Visibility cascade** - Hidden section hides all children
+3. **Array validation** - `minRows`/`maxRows` enforced on submit
+4. **$i index** - Use in predicates inside arrays
+5. **Tab layout** - Each child becomes a tab
+6. **Table layout** - Best for simple, uniform rows
+
+---
+
+## Platform Differences
+
+> **Team: Please document any platform-specific behaviors**
+
+| Platform | Layout Support |
+|----------|----------------|
+| Android | ? |
+| iOS | ? |
+| Web | ? |
+

@@ -1,0 +1,263 @@
+# multimedia
+
+## Purpose
+
+File upload and capture for images, videos, audio recordings, and documents. Supports camera capture, file picker, and gallery selection.
+
+---
+
+## Configuration
+
+**Data Type:** `type: "object"` (or `type: "array"` for multiple files)
+
+**Description:** `description: "multimedia"`
+
+---
+
+## Consumed Properties
+
+### Standard Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `title` | string | Field label |
+| `hint` | string | Help text |
+| `accessMatrix` | object | Visibility, mandatory, readOnly |
+| `predicates` | array | Conditional logic |
+| `localisationMap` | object | Translations |
+
+### Media Type Properties
+| Property | Type | Purpose | Values |
+|----------|------|---------|--------|
+| `multimediaType` | string | Type of media | `"image"`, `"video"`, `"audio"`, `"document"`, `"canvas"` |
+
+### Size Properties
+| Property | Type | Purpose | Example |
+|----------|------|---------|---------|
+| `maxSize` | integer | Max file size (bytes) | `5242880` (5MB) |
+| `minSize` | integer | Min file size (bytes) | `1024` |
+
+### Camera Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `disableFilepicker` | boolean | Camera only (no gallery/files) |
+| `enforceCameraFlash` | boolean | Force flash when capturing |
+| `cameraHint` | string | Text shown when camera opens |
+| `shouldNotAutoDismissCameraView` | boolean | Keep camera open after capture |
+
+### Geo-tagging Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `enableGeoTagging` | boolean | Embed GPS in image |
+| `showGeoCoordinates` | boolean | Display coordinates to user |
+
+### Metadata Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `embedImageMetadata` | boolean | Include EXIF data |
+| `mediaInfoMetaDataFields` | string[] | Metadata fields to extract |
+
+### Multiple Files Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `maxRows` | integer | Max number of files (when type: array) |
+| `minRows` | integer | Min number of files |
+
+### Configuration Object
+| Property | Type | Purpose |
+|----------|------|---------|
+| `multimediaConfig` | object | Additional configuration |
+
+> **Team: Please document** - What properties are inside `multimediaConfig`?
+
+---
+
+## Layout Variants
+
+> **Team: Please verify** - What layout variants exist for multimedia?
+
+---
+
+## Answer Structure
+
+### Single File
+```json
+{
+  "profilePhoto": {
+    "url": "https://storage.example.com/files/abc123.jpg",
+    "name": "photo.jpg",
+    "size": 102400,
+    "mimeType": "image/jpeg"
+  }
+}
+```
+
+### With Geo-tagging
+```json
+{
+  "sitePhoto": {
+    "url": "https://...",
+    "name": "site.jpg",
+    "location": {
+      "lat": 19.0760,
+      "lng": 72.8777
+    }
+  }
+}
+```
+
+### Multiple Files (type: array)
+```json
+{
+  "documents": [
+    { "url": "...", "name": "doc1.pdf" },
+    { "url": "...", "name": "doc2.pdf" }
+  ]
+}
+```
+
+> **Team: Please verify** - What other properties are in the answer object?
+
+---
+
+## Examples
+
+### Image Capture
+```json
+{
+  "photo": {
+    "title": "Photo",
+    "type": "object",
+    "description": "multimedia",
+    "multimediaType": "image",
+    "maxSize": 5242880,
+    "accessMatrix": {
+      "mandatory": true
+    }
+  }
+}
+```
+
+### Camera Only (No Gallery)
+```json
+{
+  "sitePhoto": {
+    "title": "Site Photo",
+    "type": "object",
+    "description": "multimedia",
+    "multimediaType": "image",
+    "disableFilepicker": true,
+    "enableGeoTagging": true,
+    "cameraHint": "Capture the entire site in frame"
+  }
+}
+```
+
+### Document Upload
+```json
+{
+  "idProof": {
+    "title": "ID Proof",
+    "type": "object",
+    "description": "multimedia",
+    "multimediaType": "document",
+    "maxSize": 10485760
+  }
+}
+```
+
+### Multiple Images
+```json
+{
+  "photos": {
+    "title": "Photos",
+    "type": "array",
+    "description": "multimedia",
+    "multimediaType": "image",
+    "maxRows": 5,
+    "minRows": 1
+  }
+}
+```
+
+### Video Recording
+```json
+{
+  "videoStatement": {
+    "title": "Video Statement",
+    "type": "object",
+    "description": "multimedia",
+    "multimediaType": "video",
+    "maxSize": 52428800
+  }
+}
+```
+
+### Audio Recording
+```json
+{
+  "voiceNote": {
+    "title": "Voice Note",
+    "type": "object",
+    "description": "multimedia",
+    "multimediaType": "audio"
+  }
+}
+```
+
+### Canvas (Signature)
+```json
+{
+  "signature": {
+    "title": "Signature",
+    "type": "object",
+    "description": "multimedia",
+    "multimediaType": "canvas"
+  }
+}
+```
+
+---
+
+## Media Types
+
+| Value | Purpose | File Types |
+|-------|---------|------------|
+| `image` | Photos, images | jpg, png, gif, etc. |
+| `video` | Video recordings | mp4, mov, etc. |
+| `audio` | Audio recordings | mp3, wav, etc. |
+| `document` | PDFs, docs | pdf, doc, xlsx, etc. |
+| `canvas` | Drawing/signature | Generated image |
+
+---
+
+## Behavior Notes
+
+1. **Upload flow** - File is uploaded to storage, URL returned in answer
+2. **Geo-tagging** - Only works with `image` type and camera capture
+3. **Max size** - Validated before upload
+4. **Camera flash** - `enforceCameraFlash` only affects camera capture
+5. **Canvas** - Creates a drawing surface for signatures
+
+---
+
+## File Size Reference
+
+| Size | Bytes |
+|------|-------|
+| 1 MB | 1048576 |
+| 5 MB | 5242880 |
+| 10 MB | 10485760 |
+| 50 MB | 52428800 |
+
+---
+
+## Platform Differences
+
+> **Team: Please document any platform-specific behaviors**
+
+| Platform | Behavior |
+|----------|----------|
+| Android | ? |
+| iOS | ? |
+| Web | ? |
+

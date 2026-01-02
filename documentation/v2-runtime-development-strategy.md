@@ -1,0 +1,349 @@
+# V2 Runtime Development Strategy
+
+A phased, incremental strategy to build the V2 form runtime. We are evaluating two approaches in parallel:
+
+1. **Flutter Approach** - Dart UI + embedded JS engine for expressions
+2. **KMM/CMP Approach** - Kotlin Multiplatform shared logic + Compose Multiplatform UI (with native fallback)
+
+## Platform Strategy
+
+### Constraints
+
+1. **Must support JS expressions** - Existing expressions like `filterStringExpression` are JavaScript
+2. **Must embed in native apps** - Runtime will be a module/SDK in existing Android/iOS apps
+3. **Must support web** - Same runtime should work on web
+4. **Long-term maintainability** - Single codebase preferred
+
+### Approach Comparison
+
+| Factor | Flutter | KMM/CMP |
+|--------|---------|---------|
+| Code Sharing | 95%+ (Dart everywhere) | 90%+ (Kotlin + CMP) |
+| JS Expression Handling | Embedded engine (flutter_js) | Platform-specific (JSC/QuickJS) |
+| Bundle Size | +15-30 MB | +5-15 MB |
+| Native App Embed | Good (Flutter Module) | Best (native integration) |
+| AI Development | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
+| iOS Maturity | Stable | Stable (CMP 1.8.0+) |
+
+### Decision
+
+Build both approaches for the initial 5 field types, then compare:
+- Development velocity
+- Performance characteristics
+- Integration complexity
+- JS expression handling
+
+---
+
+## Architecture Overview
+
+### Flutter Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      FLUTTER UI LAYER                            │
+│                  (FormRenderer, FieldWidgets)                    │
+├─────────────────────────────────────────────────────────────────┤
+│                     RUNTIME ENGINE (Dart)                        │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐   │
+│  │ Parser  │ │  State  │ │  Logic  │ │Validator│ │  Access │   │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘   │
+├─────────────────────────────────────────────────────────────────┤
+│                    JS EXPRESSION ENGINE                          │
+│              (flutter_js / QuickJS - runs in isolate)           │
+├─────────────────────────────────────────────────────────────────┤
+│                    V1 → V2 CONVERTER                             │
+├─────────────────────────────────────────────────────────────────┤
+│                     V2 SCHEMA                                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### KMM/CMP Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 COMPOSE MULTIPLATFORM UI                         │
+│                  (or native SwiftUI/Compose)                     │
+├─────────────────────────────────────────────────────────────────┤
+│                     RUNTIME ENGINE (KMM)                         │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐   │
+│  │ Parser  │ │  State  │ │  Logic  │ │Validator│ │  Access │   │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘   │
+├─────────────────────────────────────────────────────────────────┤
+│                    JS EXPRESSION ENGINE                          │
+│          iOS: JavaScriptCore | Android: QuickJS/Duktape         │
+├─────────────────────────────────────────────────────────────────┤
+│                    V1 → V2 CONVERTER (exists)                    │
+├─────────────────────────────────────────────────────────────────┤
+│                     V2 SCHEMA (exists)                           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Initial Field Types (Phase 1)
+
+Focus on 5 core field types that cover key rendering patterns:
+
+| Field Type | Description | Key Features |
+|------------|-------------|--------------|
+| `textfield` | Single-line text input | Validation, patterns, prefix/suffix |
+| `number` | Numeric input | Min/max, format, counter layout |
+| `string_list` | Selection field | Enum, radio, dropdown, master data |
+| `timestamp` | Date/time picker | Date, time, range constraints |
+| `section` | Field grouping | Nested fields, repeating sections |
+
+### Why These 5?
+
+1. **textfield** - Basic input, validation patterns
+2. **number** - Numeric handling, calculations
+3. **string_list** - Selection UI, master data integration, OPTION_FILTER
+4. **timestamp** - Platform-native pickers
+5. **section** - Nested structure, repeating rows
+
+---
+
+## Phase 1: Field Rendering Foundation (Current)
+
+### 1.1 Schema Parser ✅ COMPLETED
+
+Build JSON parser to convert JSON strings into V2 Kotlin data classes.
+
+**Files:** `runtime-core/src/commonMain/kotlin/com/lowcode/runtime/core/parser/`
+
+**Deliverables:**
+- `SchemaParser.kt` - Parse JSON to SchemaV2 ✅
+- `FieldSerializerModule.kt` - Polymorphic field type serialization ✅
+- Unit tests for each field type ✅
+
+---
+
+### 1.2 State Container
+
+Create form state management - holds current values, dirty flags, errors.
+
+**Files:** `runtime-core/src/commonMain/kotlin/com/lowcode/runtime/core/state/`
+
+**Deliverables:**
+- `FormState.kt` - Holds field values as Map<String, Any?>
+- `FieldState.kt` - Individual field state (value, dirty, touched, errors)
+- `StateManager.kt` - Update state, notify observers
+
+---
+
+### 1.3 Field Rendering (Both Approaches)
+
+Render the 5 initial field types.
+
+#### Flutter Approach
+
+**Files:** `poc-flutter/lib/`
+
+```
+poc-flutter/
+├── lib/
+│   ├── main.dart
+│   ├── schema/
+│   │   ├── schema_parser.dart
+│   │   └── field_types.dart
+│   ├── state/
+│   │   ├── form_state.dart
+│   │   └── field_state.dart
+│   ├── engine/
+│   │   └── js_expression_engine.dart
+│   ├── widgets/
+│   │   ├── form_renderer.dart
+│   │   ├── field_container.dart
+│   │   ├── text_field_widget.dart
+│   │   ├── number_field_widget.dart
+│   │   ├── string_list_widget.dart
+│   │   ├── timestamp_widget.dart
+│   │   └── section_widget.dart
+│   └── test_schemas/
+│       └── reference_schemas.dart
+├── pubspec.yaml
+└── README.md
+```
+
+#### KMM/CMP Approach
+
+**Files:** `runtime-ui/src/commonMain/kotlin/com/lowcode/runtime/ui/`
+
+```
+runtime-ui/
+├── src/
+│   ├── commonMain/kotlin/com/lowcode/runtime/ui/
+│   │   ├── FormRenderer.kt
+│   │   ├── FieldContainer.kt
+│   │   ├── fields/
+│   │   │   ├── TextField.kt
+│   │   │   ├── NumberField.kt
+│   │   │   ├── StringListField.kt
+│   │   │   ├── TimestampField.kt
+│   │   │   └── SectionField.kt
+│   │   └── theme/
+│   │       └── FormTheme.kt
+│   ├── androidMain/
+│   └── iosMain/
+└── build.gradle.kts
+```
+
+---
+
+### 1.4 JS Expression Engine
+
+Both approaches need a JavaScript expression engine for:
+- `filterStringExpression` - Master data filtering
+- `formula` - Calculated fields
+- Validation expressions
+- Visibility conditions
+
+#### Flutter Implementation
+
+```dart
+// Using flutter_js package
+import 'package:flutter_js/flutter_js.dart';
+
+class JSExpressionEngine {
+  late JavascriptRuntime _runtime;
+  
+  Future<void> init() async {
+    _runtime = getJavascriptRuntime();
+  }
+  
+  dynamic evaluate(String expression, Map<String, dynamic> context) {
+    final code = '''
+      var formAnswer = ${jsonEncode(context)};
+      $expression;
+    ''';
+    return _runtime.evaluate(code).rawResult;
+  }
+  
+  Future<List<Map>> filterMasterData({
+    required List<Map> rows,
+    required Map<String, dynamic> formAnswer,
+    required String filterExpression,
+  }) async {
+    // Run in isolate for performance
+    return compute(_filterInBackground, {
+      'rows': rows,
+      'formAnswer': formAnswer,
+      'expression': filterExpression,
+    });
+  }
+}
+```
+
+#### KMM Implementation
+
+```kotlin
+// expect/actual for platform-specific JS engine
+expect class JSExpressionEngine() {
+    fun evaluate(expression: String, context: Map<String, Any?>): Any?
+    suspend fun filterMasterData(
+        rows: List<Map<String, Any?>>,
+        formAnswer: Map<String, Any?>,
+        filterExpression: String
+    ): List<Map<String, Any?>>
+}
+
+// Android: QuickJS or Duktape
+// iOS: JavaScriptCore (built-in)
+```
+
+---
+
+## Test Schemas
+
+Reference schemas for testing all 5 field types:
+
+### Schema 1: Basic Form
+Tests: textfield, number with validation
+
+### Schema 2: Selection Form  
+Tests: string_list with enum, radio, dropdown layouts
+
+### Schema 3: Master Data Form
+Tests: string_list with masterId, OPTION_FILTER, cascading
+
+### Schema 4: Date/Time Form
+Tests: timestamp, date, time with constraints
+
+### Schema 5: Nested Form
+Tests: section with nested fields, repeating sections
+
+See: `documentation/test-schemas/` for complete schemas.
+
+---
+
+## Success Criteria (Phase 1)
+
+| Criteria | Flutter | KMM/CMP |
+|----------|---------|---------|
+| 5 field types render correctly | ☐ | ☐ |
+| Basic validation works | ☐ | ☐ |
+| JS expressions evaluate | ☐ | ☐ |
+| State management works | ☐ | ☐ |
+| Runs on Android | ☐ | ☐ |
+| Runs on iOS | ☐ | ☐ |
+| Embeddable as module | ☐ | ☐ |
+
+---
+
+## Progress Tracking
+
+### Completed
+- [x] V2 Schema data classes
+- [x] V1 Schema data classes
+- [x] V1 to V2 Converter
+- [x] Phase 1.1: Schema Parser
+- [x] Master Data documentation updated
+
+### In Progress
+- [ ] Phase 1.2: State Container
+- [ ] Test schema creation
+
+### Up Next
+- [ ] Phase 1.3: Flutter field rendering
+- [ ] Phase 1.3: KMM/CMP field rendering
+- [ ] Phase 1.4: JS Expression Engine
+
+---
+
+## File Structure
+
+```
+kmmruntime/
+├── runtime-core/                    # Shared Kotlin logic (existing)
+│   └── src/commonMain/kotlin/...
+├── runtime-ui/                      # Compose Multiplatform UI (new)
+│   └── src/
+│       ├── commonMain/
+│       ├── androidMain/
+│       └── iosMain/
+├── poc-flutter/                     # Flutter comparison (new)
+│   ├── lib/
+│   ├── android/
+│   ├── ios/
+│   └── pubspec.yaml
+├── documentation/
+│   ├── test-schemas/               # Reference test schemas (new)
+│   │   ├── 01-basic-form.json
+│   │   ├── 02-selection-form.json
+│   │   ├── 03-master-data-form.json
+│   │   ├── 04-datetime-form.json
+│   │   └── 05-nested-form.json
+│   └── v2-runtime-development-strategy.md
+└── reference/
+    └── old-java-dsl/
+```
+
+---
+
+## Next Steps
+
+1. Create test schemas for 5 field types
+2. Set up Flutter project structure
+3. Set up runtime-ui module for CMP
+4. Implement field rendering in both
+5. Compare and decide on final approach

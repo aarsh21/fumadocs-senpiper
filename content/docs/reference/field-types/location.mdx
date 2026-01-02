@@ -1,0 +1,216 @@
+---
+title: "location"
+description: "Purpose"
+---
+
+
+## Purpose
+
+GPS location capture for recording geographic coordinates. Supports automatic GPS capture and manual map pin placement.
+
+---
+
+## Configuration
+
+**Data Type:** `type: "object"`
+
+**Description:** `description: "location"`
+
+---
+
+## Consumed Properties
+
+### Standard Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `title` | string | Field label |
+| `hint` | string | Help text |
+| `accessMatrix` | object | Visibility, mandatory, readOnly |
+| `predicates` | array | Conditional logic |
+| `localisationMap` | object | Translations |
+
+### Location Behavior Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `pickManually` | boolean | Allow manual pin placement |
+| `editable` | boolean | Allow editing after capture |
+| `locationMandatory` | boolean | GPS required (vs address only) |
+
+### Display Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `showGeoCoordinates` | boolean | Display lat/lng to user |
+
+### Configuration Object
+| Property | Type | Purpose |
+|----------|------|---------|
+| `locationFieldConfig` | object | Additional configuration |
+
+### Geocoding Properties
+| Property | Type | Purpose |
+|----------|------|---------|
+| `geocodeDataMapping` | object | Map geocode data to form fields |
+
+> **Team: Please document** - What properties are inside `locationFieldConfig`?
+
+---
+
+## Layout Variants
+
+> **Team: Please document** - What layout variants exist for location?
+
+---
+
+## Answer Structure
+
+```json
+{
+  "siteLocation": {
+    "lat": 19.0760,
+    "lng": 72.8777,
+    "address": "Mumbai, Maharashtra, India",
+    "accuracy": 10
+  }
+}
+```
+
+> **Team: Please verify** - What other properties are in the answer?
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `lat` | number | Latitude |
+| `lng` | number | Longitude |
+| `address` | string | Reverse geocoded address |
+| `accuracy` | number | GPS accuracy in meters |
+| ? | ? | Any other properties? |
+
+---
+
+## Examples
+
+### Basic Location
+```json
+{
+  "location": {
+    "title": "Current Location",
+    "type": "object",
+    "description": "location",
+    "accessMatrix": {
+      "mandatory": true
+    }
+  }
+}
+```
+
+### Manual Pin Placement
+```json
+{
+  "deliveryLocation": {
+    "title": "Delivery Location",
+    "type": "object",
+    "description": "location",
+    "pickManually": true,
+    "showGeoCoordinates": true
+  }
+}
+```
+
+### Editable Location
+```json
+{
+  "siteLocation": {
+    "title": "Site Location",
+    "type": "object",
+    "description": "location",
+    "editable": true,
+    "pickManually": true
+  }
+}
+```
+
+### With Geocode Mapping
+```json
+{
+  "customerLocation": {
+    "title": "Customer Location",
+    "type": "object",
+    "description": "location",
+    "geocodeDataMapping": {
+      "city": "address.city",
+      "state": "address.state",
+      "pincode": "address.pincode"
+    }
+  }
+}
+```
+
+> **Team: Please verify** - How does geocodeDataMapping work?
+
+### Read-Only (Auto-Captured)
+```json
+{
+  "capturedLocation": {
+    "title": "Captured Location",
+    "type": "object",
+    "description": "location",
+    "accessMatrix": {
+      "readOnly": true
+    }
+  }
+}
+```
+
+---
+
+## Behavior Notes
+
+1. **Permission** - Requires location permission from user
+2. **GPS accuracy** - May vary based on device and environment
+3. **Reverse geocoding** - Address derived from coordinates
+4. **pickManually** - Shows map for pin placement
+5. **editable** - Allows changing location after initial capture
+6. **Indoor locations** - GPS accuracy may be poor indoors
+
+---
+
+## Use Cases
+
+| Scenario | Configuration |
+|----------|---------------|
+| Field worker check-in | Auto GPS, readOnly |
+| Delivery address | pickManually, editable |
+| Store location | pickManually, showGeoCoordinates |
+| Attendance | Auto GPS, mandatory, readOnly |
+
+---
+
+## Related: geofence
+
+The `geofence` field type is similar but includes boundary validation:
+
+```json
+{
+  "workLocation": {
+    "title": "Work Location",
+    "type": "object",
+    "description": "geofence"
+  }
+}
+```
+
+Combined with GEO_FENCE predicate to validate user is within allowed area.
+
+> **Team: Please document** - How does geofence differ in properties and behavior?
+
+---
+
+## Platform Differences
+
+> **Team: Please document any platform-specific behaviors**
+
+| Platform | Behavior |
+|----------|----------|
+| Android | ? |
+| iOS | ? |
+| Web | ? |
+

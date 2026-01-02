@@ -1,0 +1,941 @@
+# Master Data
+
+## What Is Master Data?
+
+Master data is reference data that lives outside your form but powers it. Instead of hardcoding dropdown options like:
+
+```json
+{
+  "enum": ["Maharashtra", "Karnataka", "Tamil Nadu", "Gujarat", ...]
+}
+```
+
+You reference a data source:
+
+```json
+{
+  "masterId": "location-master-uuid",
+  "columnKey": "state",
+  "masterType": "FORM"
+}
+```
+
+**Why master data matters:**
+- **Single source of truth** - Update once, all forms reflect the change
+- **Dynamic filtering** - Cascading dropdowns become trivial
+- **Large datasets** - Can't embed 10,000 cities in every form
+- **Maintainability** - Non-technical users can update data without touching forms
+
+---
+
+## How Master Data Works
+
+### The Big Picture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    MASTER DATA FORM                          │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  Row 1: { state: "Maharashtra", district: "Mumbai", │    │
+│  │          block: "Andheri", ... }                    │    │
+│  │  Row 2: { state: "Maharashtra", district: "Mumbai", │    │
+│  │          block: "Bandra", ... }                     │    │
+│  │  Row 3: { state: "Maharashtra", district: "Pune",   │    │
+│  │          block: "Kothrud", ... }                    │    │
+│  │  Row 4: { state: "Karnataka", district: "Bangalore",│    │
+│  │          block: "Koramangala", ... }                │    │
+│  │  ...                                                │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            │ Referenced by
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    YOUR FORM                                 │
+│                                                              │
+│  State Field:     [Maharashtra ▼]                           │
+│                   masterId: "...", columnKey: "state"       │
+│                                                              │
+│  District Field:  [Mumbai ▼]  ← Filtered by State           │
+│                   masterId: "...", columnKey: "district"    │
+│                   OPTION_FILTER: field = "state"            │
+│                                                              │
+│  Block Field:     [Andheri ▼] ← Filtered by District        │
+│                   masterId: "...", columnKey: "block"       │
+│                   OPTION_FILTER: field = "district"         │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### The Data Flow
+
+1. **Form loads** → Client fetches master data for all referenced masters
+2. **Data cached** → Master data stored locally for fast access
+3. **Field renders** → Dropdown populated with unique values from the column
+4. **User selects** → Value stored, dependent fields triggered
+5. **Filter runs** → Dependent dropdowns filter their options based on selection
+
+---
+
+## Master Data Properties
+
+### Essential Properties
+
+```json
+{
+  "title": "State",
+  "type": "string",
+  "description": "string_list",
+  
+  "masterId": "70311147-2fcc-489c-9981-8f374361a229",
+  "masterName": "Location Master",
+  "masterType": "FORM",
+  "columnKey": "s",
+  "columnName": "State"
+}
+```
+
+| Property | Purpose | Example |
+|----------|---------|---------|
+| `masterId` | UUID of the master data source | `"70311147-2fcc-..."` |
+| `masterName` | Human-readable name (display only) | `"Location Master"` |
+| `masterType` | Type of master (`"FORM"`, `"USER"`, `"CSV"`) | `"FORM"` |
+| `columnKey` | Key in master data to use for values | `"s"` |
+| `columnName` | Human-readable column name | `"State"` |
+
+**Important distinction:**
+- `columnKey` - The field **key** in master data answers (used in code)
+- `columnName` - The field **title** in master data schema (for display)
+
+---
+
+## Filtering Master Data
+
+### Basic OPTION_FILTER
+
+The most common pattern—filter one field based on another:
+
+```json
+{
+  "title": "District",
+  "masterId": "location-master-uuid",
+  "columnKey": "district",
+  "predicates": [{
+    "action": "OPTION_FILTER",
+    "actionConfig": {
+      "field": "state"
+    }
+  }]
+}
+```
+
+**What happens:**
+1. User selects "Maharashtra" in State
+2. District's OPTION_FILTER predicate runs
+3. System filters master data: only rows where `state == "Maharashtra"`
+4. District dropdown shows unique `district` values from filtered rows
+
+### Filter String (Advanced) ⚠️ DEPRECATED
+
+> **⚠️ Deprecated:** `filterString` is deprecated. Use `filterStringExpression` instead for searchable masters, or use `OPTION_FILTER` predicates for cascading filtering.
+
+For complex filtering logic, `filterString` was previously used:
+
+```json
+{
+  "title": "Product",
+  "masterId": "product-master-uuid",
+  "columnKey": "productName",
+  "filterString": "this.category == formAnswer.selectedCategory && this.inStock == true"
+}
+```
+
+In `filterString`:
+- `this` refers to each master data row being evaluated
+- `formAnswer` refers to the current form's answer
+
+### Filter String Condition (JSON Logic)
+
+For UI-built filters, use the structured format:
+
+```json
+{
+  "filterStringCondition": {
+    "operator": "AND",
+    "groups": [
+      { "field": "category", "operator": "equals", "value": "Electronics" },
+      { "field": "price", "operator": "lessThan", "value": 1000 }
+    ]
+  }
+}
+```
+
+### Filter String Expression (Searchable Masters)
+
+When working with searchable masters (i.e., when `searchableKeys` is defined), you can use `filterStringExpression` for client-side filtering with a JavaScript expression.
+
+```json
+{
+  "title": "Product",
+  "type": "string",
+  "description": "string_list",
+  "masterId": "product-master-uuid",
+  "columnKey": "productCode",
+  "searchableKeys": ["productCode", "productName"],
+  "filterStringExpression": "row.category === 'Electronics' && row.isActive === true"
+}
+```
+
+**How it works:**
+
+1. The client fetches master data rows matching the search criteria
+2. For each master data row, the client evaluates the `filterStringExpression`
+3. The row is placed in context and the JavaScript expression determines visibility
+4. If the expression returns `true`, the row is shown as an option
+5. If the expression returns `false`, the row is filtered out
+
+**In `filterStringExpression`:**
+- `row` refers to the current master data row being evaluated
+- You can access any column value from the row using `row.columnKey`
+- The expression must return a boolean (`true` to show, `false` to hide)
+
+**Example with form answer reference:**
+
+```json
+{
+  "title": "Available Products",
+  "masterId": "product-master-uuid",
+  "columnKey": "productCode",
+  "searchableKeys": ["productCode"],
+  "filterStringExpression": "row.region === formAnswer.selectedRegion && row.stock > 0"
+}
+```
+
+**When to use `filterStringExpression` vs `filterString`:**
+
+| Property | Use Case | Master Type | Status |
+|----------|----------|-------------|--------|
+| `filterString` | General master data filtering | Any master | ⚠️ Deprecated |
+| `filterStringExpression` | Client-side filtering for searchable masters | Searchable masters only | ✅ Recommended |
+
+**Key points:**
+- Only applicable when `searchableKeys` is defined (searchable type masters)
+- Evaluated on the client side for each row
+- Useful for dynamic filtering based on form state or complex conditions
+- Allows fine-grained control over which master data rows appear as options
+
+---
+
+## Cascading Dropdowns Pattern
+
+This is the most common master data use case. Let's build a complete example:
+
+### Master Data Structure
+
+Your Location Master form has answers like:
+
+```json
+[
+  { "s": "Maharashtra", "d": "Mumbai", "b": "Andheri", "v": "JVPD" },
+  { "s": "Maharashtra", "d": "Mumbai", "b": "Andheri", "v": "4 Bungalows" },
+  { "s": "Maharashtra", "d": "Mumbai", "b": "Bandra", "v": "Carter Road" },
+  { "s": "Maharashtra", "d": "Pune", "b": "Kothrud", "v": "Paud Road" },
+  { "s": "Karnataka", "d": "Bangalore", "b": "Koramangala", "v": "5th Block" },
+  ...
+]
+```
+
+### Form Schema
+
+```json
+{
+  "properties": {
+    "state": {
+      "title": "State",
+      "type": "string",
+      "description": "string_list",
+      "masterId": "location-master-uuid",
+      "columnKey": "s",
+      "dependentKeys": ["district"]
+    },
+    
+    "district": {
+      "title": "District",
+      "type": "string", 
+      "description": "string_list",
+      "masterId": "location-master-uuid",
+      "columnKey": "d",
+      "predicates": [{
+        "action": "OPTION_FILTER",
+        "actionConfig": { "field": "state" }
+      }],
+      "dependentKeys": ["block"]
+    },
+    
+    "block": {
+      "title": "Block",
+      "type": "string",
+      "description": "string_list",
+      "masterId": "location-master-uuid",
+      "columnKey": "b",
+      "predicates": [{
+        "action": "OPTION_FILTER",
+        "actionConfig": { "field": "district" }
+      }],
+      "dependentKeys": ["village"]
+    },
+    
+    "village": {
+      "title": "Village",
+      "type": "string",
+      "description": "string_list",
+      "masterId": "location-master-uuid",
+      "columnKey": "v",
+      "predicates": [{
+        "action": "OPTION_FILTER",
+        "actionConfig": { "field": "block" }
+      }]
+    }
+  }
+}
+```
+
+### How It Flows
+
+1. **State dropdown** shows: Maharashtra, Karnataka, ... (all unique states)
+2. User selects **Maharashtra**
+3. **District dropdown** filters to: Mumbai, Pune (districts in Maharashtra)
+4. User selects **Mumbai**
+5. **Block dropdown** filters to: Andheri, Bandra (blocks in Mumbai)
+6. User selects **Andheri**
+7. **Village dropdown** filters to: JVPD, 4 Bungalows (villages in Andheri)
+
+---
+
+## Searchable Keys
+
+For large master data sets, allow users to search:
+
+```json
+
+{
+  "schema": {
+    "title": "Address Check",
+    "type": "object",
+    "description": "form",
+    "properties": {
+      "addresstype": {
+        "title": "Sub Check Type",
+        "type": "string",
+        "description": "textfield",
+        "columnKey": "productCode",
+        "filterOnConditionPojo": false,
+        "accessMatrix": {
+          "readOnly": true
+        },
+        "autoPopulateDependentKeys": false
+      }
+    },
+    "searchableKeys": [
+      "productCode"
+    ],
+    "masterId": "master-uuid"
+  }
+}
+```
+
+**`searchableKeys`:** Specifies which columns can be searched when looking for a value. Defining this property enables the search icon to appear next to the field. Note that the combination of searchableKeys values does not need to be unique—it's simply a construct to enable the search functionality.
+
+---
+
+## Master Search & Preview
+
+When a field has `searchableKeys` defined, a **search icon** appears next to the field. Tapping this icon opens the master search interface.
+
+### How Master Search Works
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  🔍 Search Products                                         │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  Type to search...                                  │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  PRODUCT-001                                        │    │
+│  │  category: Electronics                              │    │
+│  │  price: 599                                         │    │
+│  │  brand: Samsung                                     │    │
+│  │  inStock: true                                      │    │
+│  │                                    [Show All]       │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  PRODUCT-002                                        │    │
+│  │  category: Appliances                               │    │
+│  │  price: 1299                                        │    │
+│  │  ...                                                │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Master Card Preview
+
+When search results are displayed, each master data row is shown as a **card**:
+
+1. **Card displays first 5 properties** - The client picks properties based on dictionary key ordering (implementation-dependent)
+2. **"Show All" button** - Clicking this expands the card to show all properties of the master row
+3. **Selection** - Tapping a card selects that master row and populates the field
+
+**Example field with searchable master:**
+
+```json
+{
+  "title": "Product",
+  "type": "string",
+  "description": "string_list",
+  "masterId": "product-master-uuid",
+  "columnKey": "productCode",
+  "searchableKeys": ["productCode", "productName"]
+}
+```
+
+**Behavior:**
+- Search icon appears next to the Product field
+- User taps the search icon
+- Search interface opens with a text input
+- User types a search term (searches across `productCode` and `productName`)
+- Matching master rows appear as cards
+- Each card shows first 5 properties with "Show All" option
+- User selects a card to populate the field
+
+> **📝 Note:** The current preview behavior (showing first 5 properties with random dictionary key ordering) is based on client-side logic. **This should be made configurable in future versions** to allow schema authors to specify which fields appear in the preview and in what order.
+
+---
+
+## Offline vs Online Master
+
+### Default Behavior (No Caching)
+
+By default, when no caching flags are specified, the client **always relies on the server** to fetch the latest master data:
+
+- Master data fetched on-demand from server
+- Always gets the latest data
+- Requires network connectivity
+- Each filter/search triggers an API call
+
+### Option Filter Master Caching
+
+For option filter type master configurations (cascading dropdowns), use `enableOfflineOptionFilterMaster` to enable local caching:
+
+```json
+{
+  "masterId": "location-master-uuid",
+  "columnKey": "state",
+  "predicates": [{
+    "action": "OPTION_FILTER",
+    "actionConfig": { "field": "parentField" }
+  }],
+  "enableOfflineOptionFilterMaster": true
+}
+```
+
+| `enableOfflineOptionFilterMaster` | Behavior |
+|----------------------------------|----------|
+| `true` | Client **caches** the master data locally. Filtering happens client-side (fast). |
+| `false` or not present | Client **does not cache**. Always fetches from server (default). |
+
+**When to enable caching (`true`):**
+- Master data is relatively stable
+- Offline access is required
+- Faster filtering performance is needed
+- Data size is reasonable for local storage
+
+### Searchable Master Caching (Mobile Apps)
+
+For searchable type masters (fields with `searchableKeys` defined), mobile clients (iOS and Android) have caching controlled by `enableOnlineSearchableMaster`:
+
+```json
+{
+  "masterId": "product-master-uuid",
+  "columnKey": "productCode",
+  "searchableKeys": ["productCode", "productName"],
+  "enableOnlineSearchableMaster": true
+}
+```
+
+| `enableOnlineSearchableMaster` | Behavior |
+|-------------------------------|----------|
+| `true` | Client does **not** cache the master data. Each search fetches fresh data from the server. |
+| `false` or not present | Client **caches** the master data locally for faster subsequent searches. |
+
+### Master Data Sync Mechanism
+
+When caching is enabled (for both option filter and searchable masters), the client uses an incremental sync strategy:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  INITIAL SYNC (No cached data)              │
+│                                                              │
+│  1. Client has no cached data                               │
+│  2. Fetch from server via paginated API                     │
+│  3. Store all records locally                               │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  INCREMENTAL SYNC (Has cached data)         │
+│                                                              │
+│  1. Get latest `updatedOn` timestamp from cached records    │
+│  2. Query server for records updated after that timestamp   │
+│  3. Fetch remaining/updated records via paginated API       │
+│  4. Merge with existing cache                               │
+│  5. Repeat until entire master is synced                    │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**How it works:**
+
+1. **First sync**: When no data is cached, the client fetches the complete master data from the server using a paginated API
+2. **Subsequent syncs**: The client sorts cached records by `updatedOn` timestamp, then fetches only records that have been updated since the last sync
+3. **Continuous**: This process repeats until the entire master is fully synchronized
+
+This approach ensures:
+- Efficient bandwidth usage (only fetches changes)
+- Data consistency across sessions
+- Ability to work offline with cached data
+
+---
+```
+
+| Option | Purpose |
+|--------|---------|
+| `filterMode` | `"EXACT"`, `"CONTAINS"`, `"STARTS_WITH"` |
+| `caseSensitive` | Whether matching is case-sensitive |
+| `multiValueSeparator` | For multi-value fields |
+
+---
+
+## Populating Form Fields from Master
+
+When you select a master data row, you might want to populate multiple form fields:
+
+### Enabling Search on a Field
+
+```json
+{
+  "title": "Employee",
+  "masterId": "employee-master-uuid",
+  "columnKey": "employeeId",
+  "searchableKeys": ["employeeId"]
+}
+```
+
+The `searchableKeys` property enables the search icon on the field. Users can search across the specified columns (in this case, `employeeId`). The values don't need to be unique—multiple rows may match a search term, and all matching rows will be displayed as cards for selection.
+
+### Auto-populating Related Fields
+
+When a master selection happens, other fields can pull values from the same master row.
+
+This is typically done by:
+1. Storing the selected row identifier
+2. Using predicates on other fields to copy values from the selected master row
+
+```json
+{
+  "employeeId": {
+    "masterId": "employee-master-uuid",
+    "columnKey": "employeeId",
+    "dependentKeys": ["employeeName", "department"]
+  },
+  "employeeName": {
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "/* Get name from selected employee master row */"
+      }
+    }]
+  }
+}
+```
+
+---
+
+## Common Issues and Solutions
+
+### Issue: Dropdown shows no options
+
+**Causes:**
+1. Master data not loaded (check network)
+2. `masterId` incorrect
+3. `columnKey` doesn't exist in master
+4. Filter removed all options
+
+**Debug:** Check that master data returns rows, verify column keys match.
+
+### Issue: Filter not working
+
+**Causes:**
+1. `dependentKeys` not set on source field
+2. `OPTION_FILTER` action config wrong
+3. Column key mismatch between fields
+
+**Debug:** Verify the chain: source field → dependentKeys → target field → OPTION_FILTER → actionConfig.field
+
+### Issue: Duplicate options showing
+
+**Cause:** Master data has duplicate values in the column.
+
+**Solution:** The system should deduplicate. If not, ensure master data is clean.
+
+### Issue: Slow loading with large master
+
+**Solutions:**
+1. Disable caching to use server-side filtering (don't set `enableOfflineOptionFilterMaster`)
+2. Split master into smaller, focused masters
+3. Enable pagination/search instead of loading all
+
+---
+
+## Best Practices
+
+### 1. Design Masters Thoughtfully
+
+Create focused masters rather than one giant master:
+
+```
+Good:
+- Location Master (state/district/block/village)
+- Product Master (product info)
+- Customer Master (customer info)
+
+Bad:
+- Everything Master (all reference data combined)
+```
+
+### 2. Use Consistent Key Naming
+
+In master data, use short but meaningful keys:
+
+```json
+{
+  "s": "Maharashtra",    // state
+  "d": "Mumbai",         // district
+  "b": "Andheri",        // block
+  "v": "JVPD"           // village
+}
+```
+
+Keep a mapping document for reference.
+
+### 3. Plan the Cascade
+
+Before building, map out your cascade:
+
+```
+State (s)
+  └─▶ filters District (d)
+        └─▶ filters Block (b)
+              └─▶ filters Village (v)
+```
+
+### 4. Handle Empty Filters Gracefully
+
+What happens when a user changes State after selecting a Village? The Village might no longer be valid.
+
+Options:
+- Clear dependent fields when parent changes
+- Show validation error
+- Keep value but mark as invalid
+
+### 5. Cache Appropriately
+
+- Small, stable masters: Cache aggressively
+- Large masters: Use online search
+- Frequently changing masters: Set appropriate cache TTL
+
+---
+
+## Quick Reference
+
+```json
+{
+  "title": "Field Label",
+  "type": "string",
+  "description": "string_list",
+  
+  // Master binding
+  "masterId": "uuid",
+  "masterName": "Display Name",
+  "masterType": "FORM",
+  "groupId": "uuid",
+  "columnKey": "key",
+  "columnName": "Column Display Name",
+  
+  // Filtering
+  "predicates": [{
+    "action": "OPTION_FILTER",
+    "actionConfig": { "field": "parentFieldKey" }
+  }],
+  "filterString": "this.column == formAnswer.field",  // ⚠️ DEPRECATED
+  "filterStringExpression": "row.column === formAnswer.field",  // ✅ Use this for searchable masters
+  
+  // Dependencies
+  "dependentKeys": ["childField1", "childField2"],
+  
+  // Search (filterStringExpression requires searchableKeys)
+  // Note: Preview shows first 5 properties automatically (not configurable yet)
+  "searchableKeys": ["key1", "key2"],
+  
+  // Caching
+  "enableOfflineOptionFilterMaster": true,  // Cache option filter masters
+  "enableOnlineSearchableMaster": true      // Don't cache searchable masters (fetch from server)
+}
+```
+
+---
+
+## API Reference
+
+This section documents the server API used by clients to fetch master data for both searchable and option filter masters.
+
+### Endpoint
+
+```
+POST {host}/api/search/masters/data/{masterId}/{groupId}/{formId}
+```
+
+| Path Parameter | Description |
+|----------------|-------------|
+| `masterId` | UUID of the master data source |
+| `groupId` | UUID of the group/organization |
+| `formId` | UUID of the form using this master |
+
+### Request Payload
+
+```json
+{
+  "key": "countryCode",
+  "value": ["IND", "USA"],
+  "formFieldKey": "address.country",
+  "columnKeyForSpecifiedColumnResponse": "countryName",
+  "isDistinctValues": true,
+  "updatedOn": 1764944822518,
+  "answer": {
+    "state": "Maharashtra",
+    "district": "Mumbai"
+  },
+  "from": 0,
+  "size": 100,
+  "applyOptionFilter": true,
+  "comparatorType": "CONTAINS",
+  "searchQueryConfiguration": { }
+}
+```
+
+### Payload Properties
+
+#### Core Search Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `key` | `string` | The column key (master field key) to search on |
+| `value` | `array` | Search value(s). Single value or array for `IN` operator. E.g., `["IND"]` for country code |
+| `formFieldKey` | `string` | Fully namespaced composite key of the form field (e.g., `"address.country"` for nested fields). The field's `columnKey` is sent in the `key` property |
+
+#### Response Control Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `columnKeyForSpecifiedColumnResponse` | `string` | `null` | If specified, returns only values for this column as a string array (used in option filter) |
+| `isDistinctValues` | `boolean` | `false` | When `true`, removes duplicate values from the response for the column specified in `key` |
+
+#### Pagination Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `updatedOn` | `long` | Timestamp for keyset pagination. Returns records updated after this timestamp (used for incremental sync) |
+| `from` | `integer` | Offset for pagination. E.g., set to `1000` to fetch records after first 1000 |
+| `size` | `integer` | Number of records to fetch per request |
+
+#### Filtering Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `answer` | `object` | Current form answer map. Server uses this to apply proper filtering based on user's selections |
+| `sectionArrayIndex` | `integer` | Index within a repeating section (if applicable) |
+| `applyOptionFilter` | `boolean` | When `true`, server applies option filtering based on current answer. E.g., if "India" is selected for country, only Indian states are returned |
+| `comparatorType` | `string` | Search comparison operator (see below). For option filter, this is ignored—the operator from `searchableKey` + `masterId` configuration is used instead |
+| `searchQueryConfiguration` | `object` | Search configuration from field schema. Client sends this as-is from the field definition |
+
+#### Internal/Deprecated Properties (Not Used by Forms)
+
+| Property | Status | Description |
+|----------|--------|-------------|
+| `companyMasterId` | Internal | Used for user search in company context, not for form masters |
+| `templateId` | Internal | Used during process template initiation |
+| `searchTextKey` | Deprecated | Not required for frontend |
+| `searchTextValue` | Deprecated | Not required for frontend |
+| `searchBasedOnAnswerMap` | Internal | Not used in forms |
+
+### Comparator Types
+
+The `comparatorType` property accepts the following operators:
+
+| Operator | Description | Value Format |
+|----------|-------------|--------------|
+| `EQUALS` | Exact match | Single value |
+| `NOT_EQUALS` | Not equal to | Single value |
+| `CONTAINS` | Contains substring | Single value |
+| `STARTS_WITH` | Starts with | Single value |
+| `ENDS_WITH` | Ends with | Single value |
+| `GREATER_THAN` | Greater than | Single value |
+| `GREATER_THAN_EQUAL` | Greater than or equal | Single value |
+| `LESS_THAN` | Less than | Single value |
+| `LESS_THAN_EQUAL` | Less than or equal | Single value |
+| `IN` | Value in list | Array of values |
+| `RANGE` | Between two values | Array of values |
+| `AND` | Logical AND | Multiple conditions |
+| `OR` | Logical OR | Multiple conditions |
+
+**Usage notes:**
+- For **searchable masters**: Client can choose the comparator type (typically `CONTAINS` or `EQUALS`)
+- For **option filter masters**: The comparator type specified in the schema configuration (along with `searchableKey` and `masterId`) is used; client-specified `comparatorType` is ignored
+
+### Response Formats
+
+#### Option Filter Response (with `columnKeyForSpecifiedColumnResponse`)
+
+When `columnKeyForSpecifiedColumnResponse` is specified, the response returns only the distinct values for that column as a string array:
+
+```json
+{
+  "status": 0,
+  "message": "Success",
+  "response": [
+    "India",
+    "Indonesia"
+  ]
+}
+```
+
+This format is the **default for mobile apps** when using online option filter.
+
+#### Full Row Response (without `columnKeyForSpecifiedColumnResponse`)
+
+When `columnKeyForSpecifiedColumnResponse` is not specified, the response returns complete master data rows:
+
+```json
+{
+  "status": 0,
+  "message": "Success",
+  "response": [
+    {
+      "masterId": "31fe5450-d478-42db-b5de-0775c23e0f31",
+      "rowId": "a5f649b0-d1e6-11f0-b99a-519e3968f21e",
+      "data": {
+        "countryCode": "IND",
+        "countryName": "India",
+        "region": "Asia"
+      },
+      "assignees": [
+        "1c75fb56-874c-454a-b597-6b899626a6cd"
+      ],
+      "createdBy": "1c75fb56-874c-454a-b597-6b899626a6cd",
+      "hash": "07494138-fbb0-d3c9-9c1a-7550078a990c",
+      "createdOn": 1764944822518,
+      "updatedOn": 1764944900577
+    },
+    {
+      "masterId": "31fe5450-d478-42db-b5de-0775c23e0f31",
+      "rowId": "aaad4210-d1e6-11f0-b99a-519e3968f21e",
+      "data": {
+        "countryCode": "IDN",
+        "countryName": "Indonesia",
+        "region": "Asia"
+      },
+      "assignees": [
+        "1c75fb56-874c-454a-b597-6b899626a6cd"
+      ],
+      "createdBy": "1c75fb56-874c-454a-b597-6b899626a6cd",
+      "hash": "d2f5c3b4-633f-fc18-a9f7-2332aa56fbad",
+      "createdOn": 1764944822518,
+      "updatedOn": 1764944908491
+    }
+  ]
+}
+```
+
+#### Response Row Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `masterId` | `string` | UUID of the master this row belongs to |
+| `rowId` | `string` | Unique identifier for this row |
+| `data` | `object` | The actual master data (key-value pairs for all columns) |
+| `assignees` | `array` | List of user UUIDs assigned to this row |
+| `createdBy` | `string` | UUID of user who created this row |
+| `hash` | `string` | Hash for data integrity/change detection |
+| `createdOn` | `long` | Creation timestamp (epoch milliseconds) |
+| `updatedOn` | `long` | Last update timestamp (used for incremental sync) |
+
+### Example: Option Filter Search
+
+Fetching districts filtered by selected state:
+
+```json
+{
+  "key": "district",
+  "value": [],
+  "formFieldKey": "location.district",
+  "columnKeyForSpecifiedColumnResponse": "district",
+  "isDistinctValues": true,
+  "answer": {
+    "state": "Maharashtra"
+  },
+  "applyOptionFilter": true,
+  "size": 100
+}
+```
+
+### Example: Searchable Master Search
+
+Searching for products by name:
+
+```json
+{
+  "key": "productName",
+  "value": ["laptop"],
+  "formFieldKey": "orderDetails.product",
+  "from": 0,
+  "size": 50,
+  "comparatorType": "CONTAINS"
+}
+```
+
+### Example: Incremental Sync
+
+Fetching records updated since last sync:
+
+```json
+{
+  "key": "productCode",
+  "value": [],
+  "formFieldKey": "product",
+  "updatedOn": 1764944822518,
+  "from": 0,
+  "size": 500
+}
+```
+
+---
+
+## Next Steps
+
+- **[Conditional Logic](conditional-logic.md)** - More on OPTION_FILTER and predicates
+- **[Recipes: Cascading Dropdowns](../recipes/cascading-dropdown.md)** - Complete working example
+- **[Visibility & Access](visibility-access.md)** - Access control with master data
+

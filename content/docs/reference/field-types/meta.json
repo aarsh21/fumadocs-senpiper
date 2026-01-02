@@ -1,0 +1,20 @@
+{
+  "title": "Field Types",
+  "pages": [
+    "index",
+    "textfield",
+    "email",
+    "phone",
+    "richtext",
+    "string-list",
+    "number",
+    "rating",
+    "timestamp",
+    "multimedia",
+    "location",
+    "qrcode",
+    "barcode",
+    "section",
+    "label"
+  ]
+}

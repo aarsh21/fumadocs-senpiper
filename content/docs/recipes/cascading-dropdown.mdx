@@ -1,0 +1,348 @@
+---
+title: "Recipe: Cascading Dropdowns"
+description: "The Problem"
+---
+
+
+## The Problem
+
+You need a series of dropdowns where each one filters based on the previous selection:
+
+```
+State → District → Block → Village
+```
+
+Selecting "Maharashtra" should show only Maharashtra's districts. Selecting "Mumbai" should show only Mumbai's blocks.
+
+---
+
+## The Solution
+
+### Step 1: Create Master Data
+
+First, you need a master data form with all combinations:
+
+**Master Data Form Answers:**
+```json
+[
+  { "s": "Maharashtra", "d": "Mumbai", "b": "Andheri", "v": "JVPD" },
+  { "s": "Maharashtra", "d": "Mumbai", "b": "Andheri", "v": "4 Bungalows" },
+  { "s": "Maharashtra", "d": "Mumbai", "b": "Bandra", "v": "Carter Road" },
+  { "s": "Maharashtra", "d": "Pune", "b": "Kothrud", "v": "Paud Road" },
+  { "s": "Karnataka", "d": "Bangalore", "b": "Koramangala", "v": "5th Block" },
+  { "s": "Karnataka", "d": "Bangalore", "b": "Indiranagar", "v": "100 Feet Road" }
+]
+```
+
+**Keys:**
+- `s` = State
+- `d` = District
+- `b` = Block
+- `v` = Village
+
+### Step 2: Create the Form Fields
+
+```json
+{
+  "properties": {
+    "s": {
+      "title": "State",
+      "type": "string",
+      "description": "string_list",
+      "masterId": "your-master-form-uuid",
+      "masterName": "Location Master",
+      "masterType": "FORM",
+      "columnKey": "s",
+      "columnName": "State",
+      "dependentKeys": ["d"],
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "enum": []
+    },
+    
+    "d": {
+      "title": "District",
+      "type": "string",
+      "description": "string_list",
+      "masterId": "your-master-form-uuid",
+      "masterName": "Location Master",
+      "masterType": "FORM",
+      "columnKey": "d",
+      "columnName": "District",
+      "predicates": [{
+        "action": "OPTION_FILTER",
+        "actionConfig": {
+          "field": "s"
+        }
+      }],
+      "dependentKeys": ["b"],
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "enum": []
+    },
+    
+    "b": {
+      "title": "Block",
+      "type": "string",
+      "description": "string_list",
+      "masterId": "your-master-form-uuid",
+      "masterName": "Location Master",
+      "masterType": "FORM",
+      "columnKey": "b",
+      "columnName": "Block",
+      "predicates": [{
+        "action": "OPTION_FILTER",
+        "actionConfig": {
+          "field": "d"
+        }
+      }],
+      "dependentKeys": ["v"],
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "enum": []
+    },
+    
+    "v": {
+      "title": "Village",
+      "type": "string",
+      "description": "string_list",
+      "masterId": "your-master-form-uuid",
+      "masterName": "Location Master",
+      "masterType": "FORM",
+      "columnKey": "v",
+      "columnName": "Village",
+      "predicates": [{
+        "action": "OPTION_FILTER",
+        "actionConfig": {
+          "field": "b"
+        }
+      }],
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "enum": []
+    }
+  },
+  
+  "order": ["s", "d", "b", "v"]
+}
+```
+
+---
+
+## How It Works
+
+### The Chain
+
+```
+┌─────────┐     dependentKeys      ┌──────────┐
+│  State  │ ──────────────────────▶│ District │
+│   (s)   │                        │   (d)    │
+└─────────┘                        └────┬─────┘
+                                        │
+                           OPTION_FILTER │ filters by "s"
+                                        │
+                                        ▼
+┌──────────┐    dependentKeys     ┌──────────┐
+│  Block   │◀─────────────────────│ District │
+│   (b)    │                      │   (d)    │
+└────┬─────┘                      └──────────┘
+     │
+     │ OPTION_FILTER filters by "d"
+     ▼
+┌──────────┐    dependentKeys     ┌──────────┐
+│ Village  │◀─────────────────────│  Block   │
+│   (v)    │                      │   (b)    │
+└──────────┘                      └──────────┘
+```
+
+### Step-by-Step Flow
+
+1. **Form loads:**
+   - State dropdown populated with unique values from master's "s" column
+   - District, Block, Village are empty (no filter yet)
+
+2. **User selects "Maharashtra":**
+   - State's `dependentKeys` triggers District
+   - District's OPTION_FILTER runs: filter master where `s == "Maharashtra"`
+   - District dropdown shows: Mumbai, Pune
+
+3. **User selects "Mumbai":**
+   - District's `dependentKeys` triggers Block
+   - Block's OPTION_FILTER runs: filter master where `d == "Mumbai"` (and implicitly `s == "Maharashtra"`)
+   - Block dropdown shows: Andheri, Bandra
+
+4. **User selects "Andheri":**
+   - Block's `dependentKeys` triggers Village
+   - Village's OPTION_FILTER runs: filter master where `b == "Andheri"`
+   - Village dropdown shows: JVPD, 4 Bungalows
+
+---
+
+## Key Points
+
+### 1. Empty `enum` Array
+
+```json
+"enum": []
+```
+
+The `enum` is empty because options come from master data, not hardcoded values.
+
+### 2. The `dependentKeys` Chain
+
+Each field lists what depends on it:
+- State → depends: District
+- District → depends: Block
+- Block → depends: Village
+- Village → depends: nothing
+
+### 3. The `OPTION_FILTER` References
+
+Each filter references its **immediate parent**:
+- District filters by State (field: "s")
+- Block filters by District (field: "d")
+- Village filters by Block (field: "b")
+
+### 4. Master Data Must Be Denormalized
+
+Each row must contain all hierarchy levels:
+
+```json
+{ "s": "Maharashtra", "d": "Mumbai", "b": "Andheri", "v": "JVPD" }
+```
+
+Not separate tables like:
+```json
+// States table
+{ "id": 1, "name": "Maharashtra" }
+// Districts table  
+{ "id": 1, "stateId": 1, "name": "Mumbai" }
+```
+
+---
+
+## Adding a Calculated Location Key
+
+Often you want a combined key for the full location:
+
+```json
+{
+  "l": {
+    "title": "Location Key",
+    "type": "string",
+    "description": "textfield",
+    "formulaKeys": ["s", "d", "b", "v"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "this.s + '/' + this.d + '/' + this.b + '/' + this.v"
+      }
+    }],
+    "accessMatrix": {
+      "readOnly": true,
+      "visibility": "VISIBLE"
+    }
+  }
+}
+```
+
+**Result:** `"Maharashtra/Mumbai/Andheri/JVPD"`
+
+---
+
+## Handling Parent Changes
+
+What happens when user changes State after selecting Village?
+
+**Current behavior:** Lower dropdowns retain their values, but may become invalid.
+
+**To auto-clear children:** Add CALC predicates that reset values:
+
+```json
+{
+  "d": {
+    "predicates": [
+      {
+        "action": "OPTION_FILTER",
+        "actionConfig": { "field": "s" }
+      },
+      {
+        "action": "CALC",
+        "actionConfig": {
+          "formula": "null"  // Clear when parent changes
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+## With Localization
+
+Add translations for each level:
+
+```json
+{
+  "s": {
+    "title": "State",
+    "localisationMap": {
+      "Hindi": { "title": "राज्य" },
+      "Odia": { "title": "ରାଜ୍ୟ" }
+    }
+  },
+  "d": {
+    "title": "District",
+    "localisationMap": {
+      "Hindi": { "title": "जिला" },
+      "Odia": { "title": "ଜିଲ୍ଲା" }
+    }
+  }
+}
+```
+
+---
+
+## Troubleshooting
+
+### Dropdown shows no options
+
+1. Check `masterId` is correct
+2. Check `columnKey` matches the master data field
+3. Check master data has values for that column
+4. Check OPTION_FILTER is referencing the correct parent field
+
+### Filter not working
+
+1. Verify `dependentKeys` is set on the parent
+2. Verify OPTION_FILTER action has `field` pointing to correct parent key
+3. Check that master data column names match
+
+### Performance with large data
+
+If you have thousands of locations:
+
+```json
+{
+  "enableOnlineSearchableMaster": true,
+  "enableOfflineOptionFilterMaster": false
+}
+```
+
+This fetches filtered data from server instead of filtering locally.
+
+---
+
+## Complete Example
+
+See [formschemaexamples.json](../../reference/old-java-dsl/formschemaexamples.json) for real-world cascading dropdown implementations used in production.
+

@@ -1,0 +1,16 @@
+{
+  "title": "Form Schema DSL",
+  "root": true,
+  "pages": [
+    "index",
+    "overview",
+    "concepts",
+    "recipes",
+    "reference",
+    "schema",
+    "evolution",
+    "development",
+    "design",
+    "test-schemas"
+  ]
+}

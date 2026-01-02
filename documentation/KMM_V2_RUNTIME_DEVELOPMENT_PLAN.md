@@ -1,0 +1,525 @@
+# KMM V2 Runtime - Incremental Development Plan
+
+## Executive Summary
+
+This document outlines a systematic, phased approach to complete the KMM V2 form runtime development. The plan emphasizes:
+1. **Incremental delivery** - Small, testable milestones
+2. **Feature parity tracking** - Clear comparison with native iOS/Android
+3. **Test-driven development** - Each feature has associated test cases
+4. **Rollout readiness** - Feature flagging for gradual enablement
+
+---
+
+## Current State Assessment
+
+### ✅ Completed Components
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| V2 Schema Data Classes | ✅ Done | `runtime-core/schema/` |
+| V1 to V2 Converter | ✅ Done | `runtime-core/converter/` |
+| Schema Parser | ✅ Done | `runtime-core/parser/` |
+| iOS Framework Integration | ✅ Done | `ios/iosclient/SenpiperIOS/V2Runtime/` |
+| Basic FormRenderer | ✅ Done | `runtime-ui/ui/FormRenderer.kt` |
+| Expression Engine (partial) | ✅ Done | `runtime-ui/ui/engine/` |
+
+### Implemented Field Types (KMM)
+
+| Field Type | Rendering | Validation | Predicates | Status |
+|------------|-----------|------------|------------|--------|
+| `textfield` | ✅ | Partial | ❌ | Basic |
+| `number` | ✅ | Partial | ❌ | Basic |
+| `string_list` | ✅ | Partial | ❌ | Basic |
+| `timestamp` | ✅ | Partial | ❌ | Basic |
+| `section` | ✅ | ❌ | ❌ | Basic |
+| All others | ❌ | ❌ | ❌ | Not started |
+
+### Native iOS Field Types Reference
+
+From `SPFormConstants.swift`:
+```swift
+enum FormFieldDescription: String {
+    case typeTextField = "textfield"
+    case typePhoneField = "phone"
+    case typeRatingField = "rating"
+    case typeProgressField = "progress"
+    case typeLocationField = "location"
+    case typeGeofenceField = "geofence"
+    case typeImageField = "image"
+    case typeVideoField = "video"
+    case typeAudioField = "audio"
+    case typeMultiMediaField = "multimedia"
+    case typeDocumentField = "document"
+    case typeSection = "section"
+    case typeStringList = "string_list"
+    case typeEmail = "email"
+    case typeNumber = "number"
+    case typeQrCode = "qrcode"
+    case typeBarCode = "barcode"
+    case typeLabel = "label"
+    case report = "report"
+    case typeDate = "date"
+    case typeTimestamp = "timestamp"
+    case typeRichText = "richtext"
+    case typeCanvasField = "canvas"
+    case typeTime = "time"
+    case typeGroupMember = "group_member"
+    case typeSeparatedInput = "separated_input"
+    case typeObjectDimension = "object_dimension"
+    case typeObjectDetection = "object_detection"
+    case typeTextExtraction = "text_extraction"
+}
+```
+
+**Total: 29 field types in native iOS**
+
+---
+
+## Development Phases
+
+### Phase 0: Foundation & Testing Infrastructure (Week 1-2)
+**Goal:** Establish testing framework before adding features
+
+#### 0.1 Test Schema Repository
+- [ ] Create comprehensive test schemas for each field type
+- [ ] Create edge-case schemas (empty, invalid, huge)
+- [ ] Set up automated schema validation
+
+#### 0.2 Visual Testing App
+- [ ] Create standalone KMM test app (separate from main app)
+- [ ] Side-by-side comparison view (KMM vs Native screenshot)
+- [ ] Form submission result diff viewer
+
+#### 0.3 Unit Test Framework
+- [ ] Field rendering unit tests
+- [ ] State management unit tests
+- [ ] Expression evaluation unit tests
+- [ ] Predicate execution unit tests
+
+#### 0.4 Integration Test Cases
+- [ ] Schema parsing → Rendering pipeline tests
+- [ ] User input → State update → Validation tests
+- [ ] Predicate trigger → Field update tests
+
+**Deliverables:**
+- `test-app/` - Standalone testing application
+- `runtime-core/src/commonTest/` - Unit tests
+- `runtime-ui/src/commonTest/` - UI component tests
+
+---
+
+### Phase 1: Core Field Types (Week 3-5)
+**Goal:** Complete rendering and validation for 10 most-used field types
+
+#### Priority 1 (Critical - Week 3)
+
+| Field | Rendering | Validation | States | Test Schema |
+|-------|-----------|------------|--------|-------------|
+| `textfield` | Pattern, minSize, maxSize, hint, placeholder | required, pattern | visible, disabled, readOnly | 01-textfield.json |
+| `number` | prefix, suffix, format, counter layout | min, max, required | visible, disabled, readOnly | 02-number.json |
+| `string_list` | dropdown, radio, checkbox, pills | required, multiselect min/max | visible, disabled | 03-selection.json |
+| `email` | keyboard type, validation | email format, required | visible, disabled | 04-email.json |
+| `phone` | keyboard type, country code | pattern, required | visible, disabled | 05-phone.json |
+
+#### Priority 2 (High - Week 4)
+
+| Field | Rendering | Validation | States | Test Schema |
+|-------|-----------|------------|--------|-------------|
+| `timestamp` | date picker, time picker, format | min/max date, required | visible, disabled | 06-datetime.json |
+| `date` | date picker only | past/future constraints | visible, disabled | 06-datetime.json |
+| `time` | time picker only | - | visible, disabled | 06-datetime.json |
+| `section` (object) | accordion, collapsed, card layouts | nested validation | visible | 07-section.json |
+| `section` (array) | repeatable rows, table layout | minRows, maxRows | visible | 08-repeater.json |
+
+#### Priority 3 (Medium - Week 5)
+
+| Field | Rendering | Validation | States | Test Schema |
+|-------|-----------|------------|--------|-------------|
+| `label` | h1, h2, h3, info, warn, error layouts | - | visible | 09-label.json |
+| `richtext` | multi-line, formatting toolbar | - | visible, disabled | 10-richtext.json |
+| `rating` | star display, interactive | min rating | visible, disabled | 11-rating.json |
+| `progress` | progress bar display | - | visible (read-only) | 12-progress.json |
+
+**Testing Checklist per Field:**
+- [ ] Renders correctly with default props
+- [ ] Renders correctly with all optional props
+- [ ] Validation errors display correctly
+- [ ] Required validation works
+- [ ] State changes (visible/disabled/readOnly) work
+- [ ] RTL layout works
+- [ ] Dark mode works
+- [ ] Value serialization/deserialization correct
+
+---
+
+### Phase 2: Predicates & Dynamic Behavior (Week 6-8)
+**Goal:** Implement conditional logic engine
+
+#### 2.1 Predicate Actions (Priority Order)
+
+| Action | Description | Dependencies | Test Schema |
+|--------|-------------|--------------|-------------|
+| `CALC` | Calculate field value | Expression engine | 20-calc.json |
+| `APPLY_ACCESS_MATRIX` | Change visibility/mandatory | - | 21-access-matrix.json |
+| `OPTION_FILTER` | Filter dropdown options | Master data | 22-option-filter.json |
+| `VALIDATE` | Custom validation | Expression engine | 23-validate.json |
+| `COPY` | Copy value from field | - | 24-copy.json |
+
+#### 2.2 Expression Engine Enhancement
+- [ ] JavaScript expression evaluation (using QuickJS/JavaScriptCore)
+- [ ] `this` context binding (current form values)
+- [ ] Date/math functions support
+- [ ] Error handling and fallback
+
+#### 2.3 Dependency Tracking
+- [ ] `dependentKeys` resolution
+- [ ] `formulaKeys` resolution
+- [ ] Circular dependency detection
+- [ ] Efficient re-evaluation on change
+
+#### 2.4 Deprecated Actions (Skip for now)
+- `FILTER` → Use `OPTION_FILTER`
+- `DATE_CALC` → Use `CALC`
+- `SHOW` → Use `APPLY_ACCESS_MATRIX`
+- `MAKE_MANDATORY` → Use `APPLY_ACCESS_MATRIX`
+- `RESTRICT_ROWS` → Use array constraints
+
+**Testing Checklist per Predicate:**
+- [ ] Condition evaluation works (true/false)
+- [ ] Action executes correctly when condition is true
+- [ ] No action when condition is false
+- [ ] Chained predicates work
+- [ ] Error handling for invalid expressions
+
+---
+
+### Phase 3: Master Data Integration (Week 9-10)
+**Goal:** Enable dynamic options from external data sources
+
+#### 3.1 Master Data Types
+- [ ] Enum list (static options in schema)
+- [ ] Offline master (pre-synced local data)
+- [ ] Online master (API fetch)
+
+#### 3.2 Option Filter Implementation
+- [ ] Parent-child cascading (State → District → City)
+- [ ] `filterStringExpression` evaluation
+- [ ] Multi-level filtering
+- [ ] Value clearing on parent change
+
+#### 3.3 Master Data Caching
+- [ ] Local storage for offline masters
+- [ ] Cache invalidation strategy
+- [ ] Incremental updates
+
+**Test Schemas:**
+- `30-enum-options.json` - Static enum list
+- `31-cascading-dropdown.json` - State → District → Village
+- `32-searchable-master.json` - Online search
+
+---
+
+### Phase 4: Media & Location Fields (Week 11-13)
+**Goal:** Native platform integration for device features
+
+#### 4.1 Multimedia Field
+- [ ] Image capture (camera)
+- [ ] Image selection (gallery)
+- [ ] Video capture
+- [ ] Document upload
+- [ ] Audio recording
+- [ ] File size validation
+- [ ] Geo-tagging support
+
+#### 4.2 Location Field
+- [ ] GPS capture
+- [ ] Map display
+- [ ] Manual pin placement
+- [ ] Address geocoding
+- [ ] Accuracy display
+
+#### 4.3 Scanner Fields
+- [ ] QR code scanner
+- [ ] Barcode scanner
+- [ ] Result validation
+
+**Platform-Specific Implementation:**
+```
+runtime-ui/src/
+├── commonMain/   # Shared interfaces
+├── androidMain/  # Android camera/location APIs
+└── iosMain/      # iOS AVFoundation/CoreLocation
+```
+
+---
+
+### Phase 5: Advanced Field Types (Week 14-15)
+**Goal:** Complete remaining field types
+
+| Field | Complexity | Native Dependency |
+|-------|------------|-------------------|
+| `canvas` | High | Drawing library |
+| `separated_input` (OTP) | Medium | None |
+| `group_member` | Medium | User API |
+| `object_detection` | High | ML Kit |
+| `text_extraction` | High | OCR library |
+| `geofence` | Medium | Location |
+| `report` | Low | WebView |
+| `checklist` | Low | None |
+
+---
+
+### Phase 6: Form Lifecycle & Submission (Week 16-17)
+**Goal:** Complete end-to-end form flow
+
+#### 6.1 Form States
+- [ ] Draft save/restore
+- [ ] Offline queue
+- [ ] Sync status
+
+#### 6.2 Validation
+- [ ] Field-level validation
+- [ ] Section-level validation
+- [ ] Form-level validation
+- [ ] Async validation
+
+#### 6.3 Submission
+- [ ] Answer serialization
+- [ ] Media upload handling
+- [ ] Error recovery
+- [ ] Success/failure callbacks
+
+---
+
+### Phase 7: Polish & Optimization (Week 18-19)
+**Goal:** Production readiness
+
+#### 7.1 Performance
+- [ ] Large form rendering (100+ fields)
+- [ ] Memory profiling
+- [ ] Scroll performance
+- [ ] Image loading optimization
+
+#### 7.2 Accessibility
+- [ ] Screen reader support
+- [ ] Focus management
+- [ ] Keyboard navigation
+
+#### 7.3 Theming
+- [ ] Light/dark mode
+- [ ] Custom color schemes
+- [ ] Brand customization
+
+#### 7.4 Localization
+- [ ] RTL support
+- [ ] Locale-specific formatting
+- [ ] Error message translation
+
+---
+
+### Phase 8: Rollout & Feature Flagging (Week 20)
+**Goal:** Controlled production deployment
+
+#### 8.1 Feature Flags
+```kotlin
+object RuntimeConfig {
+    var useV2Runtime: Boolean = false
+    var v2SupportedFieldTypes: Set<String> = setOf()
+    var v2EnabledUserIds: Set<String> = setOf()
+    var v2EnabledFormIds: Set<String> = setOf()
+}
+```
+
+#### 8.2 Fallback Strategy
+- If V2 fails to render → Fall back to native renderer
+- Log analytics for V2 vs native comparison
+- A/B testing infrastructure
+
+#### 8.3 Monitoring
+- [ ] Crash reporting
+- [ ] Performance metrics
+- [ ] User feedback collection
+
+---
+
+## Testing Strategy
+
+### Test Pyramid
+
+```
+                   ┌─────────────────────┐
+                   │    E2E Tests        │ ← 10%
+                   │  (User Scenarios)   │
+                   └─────────┬───────────┘
+              ┌──────────────▼──────────────┐
+              │      Integration Tests       │ ← 30%
+              │  (Schema → Render → Submit)  │
+              └──────────────┬───────────────┘
+       ┌─────────────────────▼──────────────────────┐
+       │              Unit Tests                     │ ← 60%
+       │  (Parser, State, Validation, Predicates)   │
+       └─────────────────────────────────────────────┘
+```
+
+### Test Categories
+
+| Category | What | How | When |
+|----------|------|-----|------|
+| Unit | Individual functions | JUnit/Kotest | Every PR |
+| Component | UI widgets | Compose UI tests | Every PR |
+| Integration | Full form flow | Schema → Submit | Daily |
+| Visual | Screenshot comparison | Percy/Applitools | Weekly |
+| Manual | Edge cases | Test checklist | Per phase |
+
+### Test Schemas Library
+
+Create schemas for each test scenario:
+
+```
+test-schemas/
+├── field-types/          # One per field type
+│   ├── textfield.json
+│   ├── number.json
+│   └── ...
+├── predicates/           # One per predicate action
+│   ├── calc.json
+│   ├── option-filter.json
+│   └── ...
+├── edge-cases/           # Stress tests
+│   ├── large-form.json
+│   ├── deeply-nested.json
+│   └── circular-deps.json
+├── real-world/           # Production form replicas
+│   ├── customer-survey.json
+│   └── field-inspection.json
+└── regression/           # Bug fix verification
+    └── issue-123.json
+```
+
+---
+
+## Feature Parity Tracking
+
+### iOS Native vs KMM Comparison Matrix
+
+| Feature | iOS Native | KMM V2 | Gap |
+|---------|------------|--------|-----|
+| textfield | ✅ | ✅ | Validation messages |
+| email | ✅ | ⏳ | Keyboard type |
+| phone | ✅ | ⏳ | Country picker |
+| number | ✅ | ✅ | Counter layout |
+| string_list | ✅ | ✅ | Search, pills |
+| timestamp | ✅ | ✅ | Constraints |
+| section | ✅ | ✅ | All layouts |
+| multimedia | ✅ | ❌ | All |
+| location | ✅ | ❌ | All |
+| qrcode | ✅ | ❌ | All |
+| CALC | ✅ | ⏳ | Complex formulas |
+| OPTION_FILTER | ✅ | ⏳ | JS expressions |
+| APPLY_ACCESS_MATRIX | ✅ | ⏳ | All properties |
+| ... | ... | ... | ... |
+
+Legend: ✅ Complete | ⏳ In Progress | ❌ Not Started
+
+---
+
+## Success Metrics
+
+### Phase Completion Criteria
+
+Each phase is complete when:
+1. All tests passing (unit + integration)
+2. Visual QA approved
+3. No P0/P1 bugs open
+4. Performance benchmarks met
+5. Documentation updated
+
+### Production Readiness Criteria
+
+Before enabling for users:
+1. Feature parity with native for enabled field types
+2. <1% crash rate
+3. Form submission success rate ≥99%
+4. Render time <500ms for average form
+5. 48hr soak test passed
+
+---
+
+## Risk Mitigation
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| JS expression engine crashes | High | Fallback to native, comprehensive testing |
+| Performance issues on old devices | Medium | Lazy rendering, profiling |
+| Platform-specific bugs | Medium | Extensive device testing |
+| Schema incompatibilities | High | V1→V2 converter validation |
+| Integration issues with host app | Medium | Clean interface, mock testing |
+
+---
+
+## Resource Requirements
+
+### Team Allocation
+
+| Phase | KMM Developer | iOS Developer | Android Developer | QA |
+|-------|---------------|---------------|-------------------|-----|
+| 0 | ⬤ | ○ | ○ | ○ |
+| 1-2 | ⬤ | ◐ | ◐ | ○ |
+| 3-4 | ⬤ | ⬤ | ⬤ | ◐ |
+| 5-6 | ⬤ | ⬤ | ⬤ | ⬤ |
+| 7-8 | ⬤ | ◐ | ◐ | ⬤ |
+
+Legend: ⬤ Full-time | ◐ Part-time | ○ Not needed
+
+---
+
+## Next Steps (Immediate Actions)
+
+1. **Set up test infrastructure** (Week 1)
+   - Create standalone test app
+   - Set up CI for automated testing
+   - Create first 5 test schemas
+
+2. **Complete textfield implementation** (Week 1)
+   - Add all validation types
+   - Add all states (disabled, readOnly)
+   - Write comprehensive tests
+
+3. **Implement CALC predicate** (Week 2)
+   - Enhance expression engine
+   - Add dependency tracking
+   - Test with real formulas
+
+4. **Create feature flag system** (Week 2)
+   - Add runtime configuration
+   - Add fallback mechanism
+   - Add analytics logging
+
+---
+
+## Appendix
+
+### A. Documentation References
+
+- [Field Types](concepts/field-types.md)
+- [Conditional Logic](concepts/conditional-logic.md)
+- [Master Data](concepts/master-data.md)
+- [Schema Properties](schema-properties.md)
+- [V2 Runtime Strategy](v2-runtime-development-strategy.md)
+
+### B. Code References
+
+- iOS Native Forms: `ios/iosclient/SenpiperIOS/SPFormContainerView.swift`
+- iOS Field Types: `ios/iosclient/SenpiperIOS/SPFormConstants.swift`
+- KMM Renderer: `lowcode-platform/runtime-ui/src/commonMain/kotlin/com/lowcode/runtime/ui/`
+- Schema Parser: `lowcode-platform/runtime-core/src/commonMain/kotlin/com/lowcode/runtime/core/parser/`
+
+### C. Contact
+
+- **KMM Development:** [To be assigned]
+- **iOS Integration:** [To be assigned]
+- **QA Lead:** [To be assigned]
+
+---
+
+*Last Updated: December 31, 2024*

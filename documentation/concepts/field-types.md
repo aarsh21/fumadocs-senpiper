@@ -1,0 +1,738 @@
+# Field Types
+
+## Understanding Field Types
+
+Every field has two type properties that work together:
+
+```json
+{
+  "type": "string",           // Data type - how the value is stored
+  "description": "textfield"  // Field type - what UI renders
+}
+```
+
+**The relationship:**
+- `type` determines the **shape of data** (string, number, object, array, boolean)
+- `description` determines the **UI component** (textfield, dropdown, date picker, etc.)
+
+Different `description` values work with different `type` values. A `string_list` (dropdown) stores a `string`, while a `multimedia` field might store a complex object.
+
+---
+
+## Data Types (`type`)
+
+### string
+Stores text values.
+
+```json
+{ "type": "string" }
+// Answer: "Hello World"
+```
+
+**Used with:** textfield, email, phone, string_list, label, richtext, qrcode, barcode
+
+### number
+Stores numeric values (integers or decimals).
+
+```json
+{ "type": "number" }
+// Answer: 42 or 3.14159
+```
+
+**Used with:** number, rating, progress
+
+### boolean
+Stores true/false values.
+
+```json
+{ "type": "boolean" }
+// Answer: true or false
+```
+
+**Used with:** checkbox (single), toggle switches
+
+### object
+Stores nested key-value structures.
+
+```json
+{ "type": "object" }
+// Answer: { "street": "123 Main", "city": "Mumbai" }
+```
+
+**Used with:** section (grouping fields), location (lat/lng), multimedia (file metadata)
+
+### array
+Stores lists of values.
+
+```json
+{ "type": "array" }
+// Answer: [{ "name": "Item 1" }, { "name": "Item 2" }]
+```
+
+**Used with:** section (repeating), string_list (multi-select)
+
+---
+
+## Input Fields
+
+### textfield
+
+Single-line text input.
+
+```json
+{
+  "title": "Full Name",
+  "type": "string",
+  "description": "textfield",
+  "hint": "Enter your name as it appears on ID",
+  "placeholder": "John Doe",
+  "pattern": "^[A-Za-z ]+$",
+  "validationMessage": "Name can only contain letters and spaces",
+  "maxSize": 100
+}
+```
+
+**Key properties:**
+| Property | Purpose |
+|----------|---------|
+| `hint` | Help text shown near the field |
+| `placeholder` | Text shown when field is empty |
+| `pattern` | Regex for validation |
+| `validationMessage` | Error message when pattern fails |
+| `maxSize` | Maximum characters allowed |
+| `minSize` | Minimum characters required |
+
+**Layout variants:** None (always single-line, use richtext for multi-line)
+
+---
+
+### email
+
+Email input with built-in validation.
+
+```json
+{
+  "title": "Email Address",
+  "type": "string",
+  "description": "email",
+  "accessMatrix": { "mandatory": true }
+}
+```
+
+Automatically validates email format. On mobile, shows email keyboard.
+
+---
+
+### phone
+
+Phone number input.
+
+```json
+{
+  "title": "Mobile Number",
+  "type": "string",
+  "description": "phone",
+  "pattern": "^\\+91[0-9]{10}$",
+  "validationMessage": "Enter valid Indian mobile number"
+}
+```
+
+On mobile, shows phone keypad. Often combined with pattern for country-specific validation.
+
+---
+
+### number
+
+Numeric input.
+
+```json
+{
+  "title": "Quantity",
+  "type": "number",
+  "description": "number",
+  "minimum": 1,
+  "maximum": 1000,
+  "format": "#,##0"
+}
+```
+
+**Key properties:**
+| Property | Purpose |
+|----------|---------|
+| `minimum` | Minimum allowed value |
+| `maximum` | Maximum allowed value |
+| `format` | Display format (e.g., "#,##0.00" for currency) |
+| `prefix` | Text before value (e.g., "$") |
+| `suffix` | Text after value (e.g., "kg") |
+
+---
+
+### string_list
+
+Dropdown, radio buttons, or checkboxes for selecting from options.
+
+```json
+{
+  "title": "Country",
+  "type": "string",
+  "description": "string_list",
+  "enum": ["India", "USA", "UK", "Canada"],
+  "layout": "radio"
+}
+```
+
+**Layout variants:**
+| Layout | Behavior |
+|--------|----------|
+| (none) | Dropdown picker |
+| `radio` | Radio buttons (single select) |
+| `checkbox` | Checkboxes (typically with type: array for multi) |
+| `small_pill` / `pills` | Pill/chip style buttons |
+| `large_pill` | Larger pill buttons |
+
+**For multi-select:**
+```json
+{
+  "type": "array",
+  "description": "string_list",
+  "layout": "checkbox",
+  "enum": ["Option A", "Option B", "Option C"]
+}
+```
+
+**With master data:**
+```json
+{
+  "type": "string",
+  "description": "string_list",
+  "masterId": "master-uuid",
+  "columnKey": "stateName",
+  "enum": []
+}
+```
+
+---
+
+### richtext
+
+Multi-line text with rich formatting.
+
+```json
+{
+  "title": "Description",
+  "type": "string",
+  "description": "richtext"
+}
+```
+
+Provides formatting toolbar (bold, italic, lists, etc.).
+
+---
+
+### rating
+
+Star rating input.
+
+```json
+{
+  "title": "Satisfaction Rating",
+  "type": "number",
+  "description": "rating",
+  "maximum": 5
+}
+```
+
+Displays interactive stars. Value is a number (e.g., 4 out of 5).
+
+---
+
+### progress
+
+Progress bar display.
+
+```json
+{
+  "title": "Completion",
+  "type": "number",
+  "description": "progress",
+  "maximum": 100
+}
+```
+
+Typically read-only, shows visual progress indicator.
+
+---
+
+## Date & Time Fields
+
+### timestamp
+
+Full date and time picker.
+
+```json
+{
+  "title": "Appointment Time",
+  "type": "string",
+  "description": "timestamp",
+  "format": "dd MMM yyyy HH:mm"
+}
+```
+
+**Key properties:**
+| Property | Purpose |
+|----------|---------|
+| `format` | Display format |
+| `dateOnly` | If true, only date (no time) |
+| `timeOnly` | If true, only time (no date) |
+| `systemTime` | If true, auto-fill with current time |
+| `minimum` / `maximum` | Date range limits |
+| `timeUnit` | Unit for min/max (`DAY`, `WEEK`, `MONTH`, etc.) |
+
+---
+
+### date
+
+Date picker (convenience type, same as timestamp with dateOnly).
+
+```json
+{
+  "title": "Birth Date",
+  "type": "string",
+  "description": "date",
+  "format": "dd/MM/yyyy"
+}
+```
+
+---
+
+### time
+
+Time picker only.
+
+```json
+{
+  "title": "Start Time",
+  "type": "string",
+  "description": "time",
+  "format": "HH:mm"
+}
+```
+
+---
+
+### duration
+
+Time duration input.
+
+```json
+{
+  "title": "Meeting Duration",
+  "type": "string",
+  "description": "duration"
+}
+```
+
+---
+
+## Media Fields
+
+### multimedia
+
+File upload for images, videos, audio, or documents.
+
+```json
+{
+  "title": "Profile Photo",
+  "type": "object",
+  "description": "multimedia",
+  "multimediaType": "image",
+  "maxSize": 5242880,
+  "disableFilepicker": false,
+  "enableGeoTagging": true
+}
+```
+
+**Key properties:**
+| Property | Purpose |
+|----------|---------|
+| `multimediaType` | `image`, `video`, `audio`, `document`, `canvas` |
+| `maxSize` | Maximum file size in bytes |
+| `disableFilepicker` | If true, only camera (no gallery) |
+| `enableGeoTagging` | Embed location in image metadata |
+| `enforceCameraFlash` | Force flash when capturing |
+
+**Answer structure:**
+```json
+{
+  "profilePhoto": {
+    "url": "https://...",
+    "name": "photo.jpg",
+    "size": 102400,
+    "mimeType": "image/jpeg",
+    "location": { "lat": 19.07, "lng": 72.87 }
+  }
+}
+```
+
+---
+
+## Location Fields
+
+### location
+
+GPS location capture.
+
+```json
+{
+  "title": "Site Location",
+  "type": "object",
+  "description": "location",
+  "pickManually": true,
+  "showGeoCoordinates": true,
+  "editable": true
+}
+```
+
+**Key properties:**
+| Property | Purpose |
+|----------|---------|
+| `pickManually` | Allow manual pin placement on map |
+| `showGeoCoordinates` | Display lat/lng values |
+| `editable` | Can user change location after capture |
+| `locationMandatory` | GPS required (vs. address only) |
+
+**Answer structure:**
+```json
+{
+  "location": {
+    "lat": 19.0760,
+    "lng": 72.8777,
+    "address": "Mumbai, Maharashtra, India",
+    "accuracy": 10
+  }
+}
+```
+
+---
+
+### geofence
+
+Location with boundary validation.
+
+```json
+{
+  "title": "Work Location",
+  "type": "object",
+  "description": "geofence"
+}
+```
+
+Combined with GEO_FENCE predicate to validate user is within allowed area.
+
+---
+
+## Scanner Fields
+
+### qrcode
+
+QR code scanner.
+
+```json
+{
+  "title": "Asset Code",
+  "type": "string",
+  "description": "qrcode"
+}
+```
+
+Opens camera to scan QR codes. Scanned value stored as string.
+
+---
+
+### barcode
+
+Barcode scanner (various formats).
+
+```json
+{
+  "title": "Product Barcode",
+  "type": "string",
+  "description": "barcode"
+}
+```
+
+Supports common barcode formats (UPC, EAN, Code128, etc.).
+
+---
+
+## Structure Fields
+
+### section
+
+Groups fields together, can be collapsible or displayed as tabs.
+
+```json
+{
+  "title": "Personal Information",
+  "type": "object",
+  "description": "section",
+  "layout": "accordion",
+  "properties": {
+    "firstName": { ... },
+    "lastName": { ... }
+  },
+  "order": ["firstName", "lastName"]
+}
+```
+
+**Layout variants:**
+| Layout | Behavior |
+|--------|----------|
+| (none) | Simple grouped fields |
+| `accordion` | Collapsible section |
+| `expandable` / `collapsible` | Starts collapsed |
+| `expanded` / `collapsed` | Initial state |
+| `tab` | Tab-based navigation |
+| `card` | Card-style container |
+| `table` | Table layout for array sections |
+
+**As repeating section (array):**
+```json
+{
+  "title": "Family Members",
+  "type": "array",
+  "description": "section",
+  "items": {
+    "type": "object",
+    "properties": {
+      "name": { ... },
+      "relation": { ... }
+    }
+  },
+  "minRows": 1,
+  "maxRows": 10,
+  "newRowLabel": "Add Family Member"
+}
+```
+
+---
+
+### form
+
+Reference to another form (linked forms).
+
+```json
+{
+  "title": "Related Case",
+  "type": "object",
+  "description": "form"
+}
+```
+
+Used for form linking and parent-child relationships.
+
+---
+
+## Display-Only Fields
+
+### label
+
+Non-interactive text display.
+
+```json
+{
+  "title": "Section Header",
+  "type": "string",
+  "description": "label",
+  "layout": "h1"
+}
+```
+
+**Layout variants:**
+| Layout | Appearance |
+|--------|------------|
+| `h1`, `h2`, `h3` | Heading styles |
+| `info` | Information callout |
+| `warn` | Warning callout |
+| `error` | Error callout |
+| `mediaOnly` | Display media without label |
+
+**With static content:**
+```json
+{
+  "title": "Important Notice",
+  "type": "string",
+  "description": "label",
+  "accessMatrix": {
+    "answer": "Please read all instructions carefully before proceeding."
+  }
+}
+```
+
+---
+
+## Special Fields
+
+### group_member
+
+User selection field (select team members, assignees).
+
+```json
+{
+  "title": "Assign To",
+  "type": "object",
+  "description": "group_member"
+}
+```
+
+Shows list of users in the group for selection.
+
+---
+
+### checklist
+
+Multi-item checklist.
+
+```json
+{
+  "title": "Inspection Checklist",
+  "type": "array",
+  "description": "checklist",
+  "enum": [
+    "Fire extinguisher present",
+    "Emergency exits clear",
+    "First aid kit stocked"
+  ]
+}
+```
+
+---
+
+### business_card
+
+Capture business card via OCR.
+
+```json
+{
+  "title": "Contact Card",
+  "type": "object",
+  "description": "business_card"
+}
+```
+
+---
+
+### separated_input
+
+Segmented input (like OTP fields).
+
+```json
+{
+  "title": "Verification Code",
+  "type": "string",
+  "description": "separated_input",
+  "separatedInputConfiguration": [
+    { "length": 1 },
+    { "length": 1 },
+    { "length": 1 },
+    { "length": 1 }
+  ]
+}
+```
+
+---
+
+### object_detection
+
+Image with object detection/annotation.
+
+```json
+{
+  "title": "Defect Detection",
+  "type": "object",
+  "description": "object_detection"
+}
+```
+
+---
+
+### text_extraction
+
+Image with OCR text extraction.
+
+```json
+{
+  "title": "Document Scan",
+  "type": "object",
+  "description": "text_extraction"
+}
+```
+
+---
+
+## Auto-Generated Fields
+
+Fields can be auto-generated using `autoGenerateConfig`:
+
+```json
+{
+  "title": "Survey ID",
+  "type": "string",
+  "description": "textfield",
+  "autoGenerate": true,
+  "autoGenerateConfig": {
+    "components": [
+      { "type": "expression", "expression": "this.state", "suffix": "/" },
+      { "type": "dateformat", "format": "yyyyMMdd", "suffix": "/" },
+      { "type": "sequence", "format": "###", "reset": "daily" }
+    ]
+  },
+  "accessMatrix": { "readOnly": true }
+}
+```
+
+**Component types:**
+| Type | Purpose | Example |
+|------|---------|---------|
+| `expression` | Value from formula | `"this.state"` → "Maharashtra" |
+| `dateformat` | Formatted date | `"yyyyMMdd"` → "20240115" |
+| `sequence` | Auto-incrementing number | `"###"` → "001", "002" |
+| `literal` | Static text | `"SURVEY"` |
+
+**Sequence options:**
+- `reset`: `"never"`, `"daily"`, `"monthly"`, `"yearly"`
+- `format`: `"#"`, `"##"`, `"###"` (determines padding)
+
+---
+
+## Quick Reference Table
+
+| Description | Type | Layout Options | Use Case |
+|-------------|------|----------------|----------|
+| `textfield` | string | - | Names, IDs, text input |
+| `email` | string | - | Email addresses |
+| `phone` | string | - | Phone numbers |
+| `number` | number | - | Quantities, amounts |
+| `string_list` | string/array | radio, checkbox, pills | Selection |
+| `richtext` | string | - | Formatted text |
+| `rating` | number | - | Star ratings |
+| `timestamp` | string | - | Date/time |
+| `date` | string | - | Date only |
+| `time` | string | - | Time only |
+| `multimedia` | object | - | Files, images |
+| `location` | object | - | GPS coordinates |
+| `qrcode` | string | - | QR scanning |
+| `barcode` | string | - | Barcode scanning |
+| `section` | object/array | accordion, tab, card | Grouping, repeating |
+| `label` | string | h1, h2, info, warn | Display text |
+| `group_member` | object | - | User selection |
+| `checklist` | array | - | Multi-item checks |
+
+---
+
+## Next Steps
+
+- **[Form Structure](form-structure.md)** - How types fit in the schema
+- **[Conditional Logic](conditional-logic.md)** - Dynamic field behavior
+- **[Reference: Field Types](../reference/field-types/)** - Detailed per-type docs
+

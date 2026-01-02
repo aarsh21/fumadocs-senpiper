@@ -1,0 +1,684 @@
+# Figma Design Strategy for V2 Runtime
+
+This document defines how to structure Figma designs for documentation-first, AI-driven development.
+
+---
+
+## The Container Problem in V1
+
+### What Happened
+
+In V1, every field was wrapped in a **hidden container** that wasn't formally specified:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  V1: Implicit Container (not in spec)                           │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │ ← Container (border, shadow, padding, background)        │    │
+│  │                                                          │    │
+│  │   ┌────────────────────────────────────────────────┐    │    │
+│  │   │ Label                                           │    │    │
+│  │   └────────────────────────────────────────────────┘    │    │
+│  │   ┌────────────────────────────────────────────────┐    │    │
+│  │   │ Input                                           │    │    │
+│  │   └────────────────────────────────────────────────┘    │    │
+│  │   ┌────────────────────────────────────────────────┐    │    │
+│  │   │ Helper Text                                     │    │    │
+│  │   └────────────────────────────────────────────────┘    │    │
+│  │                                                          │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Problems:**
+- Container styling was controlled by `titleDisplayConfiguration`, `fillModeConfiguration`, etc.
+- No formal specification of container variants
+- Different platforms implemented containers differently
+- No documentation of container states (hover, focus, error)
+
+### What V2 Needs
+
+**Explicit, documented container system:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  V2: Explicit Container Hierarchy                                │
+│                                                                  │
+│  FieldContainer (documented, with variants)                      │
+│  ├── FieldWrapper (label + input + helper)                       │
+│  │   ├── Label                                                   │
+│  │   ├── InputSlot (field-specific content)                      │
+│  │   └── HelperSlot (hint or error)                              │
+│  │                                                               │
+│  SectionContainer (for groups)                                   │
+│  ├── SectionHeader (title + expand/collapse)                     │
+│  └── SectionContent (child fields)                               │
+│                                                                  │
+│  RepeaterContainer (for arrays)                                  │
+│  ├── RepeaterHeader (title + count)                              │
+│  ├── RowContainer (per item)                                     │
+│  │   ├── RowHeader (preview fields + actions)                    │
+│  │   └── RowContent (child fields)                               │
+│  └── AddRowButton                                                │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Figma Structure
+
+### Page Organization
+
+```
+📁 Figma File: "V2 Design System"
+│
+├── 📄 Page: "0. Design Tokens"
+│   ├── Colors (primary, semantic, neutral)
+│   ├── Typography (scale)
+│   ├── Spacing (scale)
+│   ├── Border Radius (scale)
+│   └── Shadows (scale)
+│
+├── 📄 Page: "1. Primitives"
+│   ├── Icons
+│   ├── Buttons (primary, secondary, text)
+│   └── Badges / Tags
+│
+├── 📄 Page: "2. Containers"          ← THE MISSING PIECE
+│   ├── FieldContainer (all states)
+│   ├── SectionContainer (all variants)
+│   └── RepeaterContainer (all states)
+│
+├── 📄 Page: "3. Field Components"
+│   ├── TextField (all states)
+│   ├── NumberField (all states)
+│   ├── SelectField (all states)
+│   ├── DateField (all states)
+│   ├── ... (all 15+ field types)
+│   └── Each with variants matrix
+│
+├── 📄 Page: "4. Composite Components"
+│   ├── Form (multi-field layout)
+│   ├── Page (with navigation)
+│   └── Wizard (multi-page)
+│
+├── 📄 Page: "5. States Matrix"
+│   └── Every component × every state = screenshot
+│
+└── 📄 Page: "6. Examples"
+    ├── Simple Form
+    ├── Multi-page Form
+    └── Complex Nested Form
+```
+
+---
+
+## Container Specifications
+
+### 1. FieldContainer
+
+The wrapper around every field input.
+
+#### Anatomy
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  FieldContainer                                                  │
+│  ├── containerBorder (optional)                                  │
+│  ├── containerBackground (optional)                              │
+│  ├── containerShadow (optional)                                  │
+│  │                                                               │
+│  │   ┌─────────────────────────────────────────────────────┐    │
+│  │   │ Label Row                                            │    │
+│  │   │ ├── requiredIndicator (optional, left or right)      │    │
+│  │   │ ├── labelText                                        │    │
+│  │   │ └── hintIcon (optional, triggers tooltip)            │    │
+│  │   └─────────────────────────────────────────────────────┘    │
+│  │                                                               │
+│  │   ┌─────────────────────────────────────────────────────┐    │
+│  │   │ Input Slot (field-specific component goes here)      │    │
+│  │   └─────────────────────────────────────────────────────┘    │
+│  │                                                               │
+│  │   ┌─────────────────────────────────────────────────────┐    │
+│  │   │ Helper Row                                           │    │
+│  │   │ ├── helperText OR errorText                          │    │
+│  │   │ └── characterCount (optional)                        │    │
+│  │   └─────────────────────────────────────────────────────┘    │
+│  │                                                               │
+│  └───────────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Variants
+
+| Variant | containerBorder | containerBackground | containerShadow | Use Case |
+|---------|-----------------|---------------------|-----------------|----------|
+| `flat` | none | transparent | none | Inside sections, minimal UI |
+| `outlined` | 1px border | transparent | none | Standalone fields |
+| `filled` | none | surface color | none | Grouped fields |
+| `elevated` | none | white | shadow.sm | Card-like appearance |
+| `card` | 1px border | white | shadow.md | Prominent fields |
+
+#### States
+
+| State | Border Color | Background | Shadow | Label Color | Other |
+|-------|--------------|------------|--------|-------------|-------|
+| `default` | neutral.border | transparent | none | text.secondary | - |
+| `hover` | neutral.borderHover | neutral.surfaceHover | none | text.secondary | Cursor: pointer |
+| `focused` | primary.default | transparent | focus ring | text.primary | - |
+| `filled` | neutral.border | transparent | none | text.primary | - |
+| `error` | error.default | error.surface | none | error.default | Error icon |
+| `disabled` | neutral.disabled | neutral.disabled | none | text.disabled | Cursor: not-allowed |
+| `readOnly` | transparent | neutral.surface | none | text.secondary | No interactions |
+
+#### Figma Component Structure
+
+```
+Component: FieldContainer
+├── Props (Figma component properties):
+│   ├── variant: flat | outlined | filled | elevated | card
+│   ├── state: default | hover | focused | filled | error | disabled | readOnly
+│   ├── size: sm | md | lg
+│   ├── showLabel: boolean
+│   ├── showHelper: boolean
+│   ├── showRequired: boolean
+│   ├── labelPosition: top | left
+│   └── helperType: hint | error | counter
+│
+└── Variants Matrix (all combinations as Figma variants):
+    ├── variant=outlined, state=default, size=md
+    ├── variant=outlined, state=focused, size=md
+    ├── variant=outlined, state=error, size=md
+    ├── ... (all combinations)
+```
+
+---
+
+### 2. SectionContainer
+
+Container for grouped fields (object type).
+
+#### Anatomy
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  SectionContainer                                                │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ SectionHeader                                                ││
+│  │ ├── expandIcon (for collapsible)                             ││
+│  │ ├── sectionTitle                                             ││
+│  │ ├── sectionDescription (optional)                            ││
+│  │ └── actionSlot (optional, for custom actions)                ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ SectionContent (children go here)                            ││
+│  │                                                               ││
+│  │   ┌─────────────────────────────────────────────────────┐   ││
+│  │   │ FieldContainer                                       │   ││
+│  │   └─────────────────────────────────────────────────────┘   ││
+│  │   ┌─────────────────────────────────────────────────────┐   ││
+│  │   │ FieldContainer                                       │   ││
+│  │   └─────────────────────────────────────────────────────┘   ││
+│  │   ...                                                        ││
+│  │                                                               ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Variants (matching V1 layout options)
+
+| Variant | Behavior | Visual |
+|---------|----------|--------|
+| `default` | Always visible, no header | Just a wrapper |
+| `titled` | Header with title, always open | Title bar + content |
+| `accordion` | Collapsible, one open at a time | Expand/collapse icon |
+| `collapsible` | Individually collapsible | Expand/collapse icon |
+| `expanded` | Collapsible, starts open | Expand/collapse icon |
+| `collapsed` | Collapsible, starts closed | Expand/collapse icon |
+| `card` | Card style with shadow | Rounded corners, shadow |
+| `tab` | Tab navigation (special) | Horizontal tabs |
+| `inline` | No visual separation | Flush with parent |
+
+#### States
+
+| State | Header | Content | Border |
+|-------|--------|---------|--------|
+| `default` | Visible | Visible | neutral.border |
+| `collapsed` | Visible | Hidden | neutral.border |
+| `expanded` | Visible (different icon) | Visible | neutral.border |
+| `disabled` | Dimmed | Dimmed | neutral.disabled |
+| `error` | Error indicator | Visible | error.default |
+
+---
+
+### 3. RepeaterContainer
+
+Container for array fields (repeating sections).
+
+#### Anatomy
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  RepeaterContainer                                               │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ RepeaterHeader                                               ││
+│  │ ├── repeaterTitle                                            ││
+│  │ ├── itemCount ("3 items" or "1 of 5")                        ││
+│  │ └── headerActions (optional)                                 ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ RowContainer [0]                                             ││
+│  │ ├── RowHeader                                                ││
+│  │ │   ├── dragHandle (for reordering)                          ││
+│  │ │   ├── rowPreview (keysForRowHeader fields)                 ││
+│  │ │   ├── expandIcon (for collapsible)                         ││
+│  │ │   └── rowActions (delete, duplicate)                       ││
+│  │ └── RowContent (child fields)                                ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ RowContainer [1]                                             ││
+│  │ └── ...                                                      ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ AddRowButton                                                 ││
+│  │ ├── addIcon                                                  ││
+│  │ └── label (from newRowLabel)                                 ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ ValidationMessage (minRows/maxRows errors)                   ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Variants
+
+| Variant | Row Display | Use Case |
+|---------|-------------|----------|
+| `list` | Vertical list of cards | Default |
+| `accordion` | Collapsible rows | Space-saving |
+| `table` | Table layout (webLayout) | Data grids |
+| `card` | Cards in grid/flex | Visual items |
+| `inline` | Minimal, inline | Simple lists |
+
+#### Row States
+
+| State | Visual | Actions Available |
+|-------|--------|-------------------|
+| `default` | Normal | Edit, delete, duplicate |
+| `collapsed` | Header only | Expand, delete |
+| `expanded` | Full content | Collapse, delete |
+| `editing` | Edit mode | Save, cancel |
+| `dragging` | Being reordered | Drop targets shown |
+| `error` | Error indicator | View errors |
+| `disabled` | Dimmed | None |
+| `deleting` | Confirmation | Confirm, cancel |
+
+---
+
+## Design Token Integration
+
+### Tokens Studio Structure
+
+```json
+{
+  "colors": {
+    "primary": {
+      "default": { "value": "#0066FF", "type": "color" },
+      "light": { "value": "#E6F0FF", "type": "color" },
+      "dark": { "value": "#0052CC", "type": "color" }
+    },
+    "semantic": {
+      "error": { "value": "#DC3545", "type": "color" },
+      "warning": { "value": "#FFC107", "type": "color" },
+      "success": { "value": "#28A745", "type": "color" }
+    },
+    "neutral": {
+      "background": { "value": "#FFFFFF", "type": "color" },
+      "surface": { "value": "#F8F9FA", "type": "color" },
+      "border": { "value": "#DEE2E6", "type": "color" },
+      "borderHover": { "value": "#ADB5BD", "type": "color" },
+      "disabled": { "value": "#E9ECEF", "type": "color" }
+    },
+    "text": {
+      "primary": { "value": "#212529", "type": "color" },
+      "secondary": { "value": "#6C757D", "type": "color" },
+      "disabled": { "value": "#ADB5BD", "type": "color" }
+    }
+  },
+  "spacing": {
+    "xs": { "value": "4", "type": "spacing" },
+    "sm": { "value": "8", "type": "spacing" },
+    "md": { "value": "16", "type": "spacing" },
+    "lg": { "value": "24", "type": "spacing" },
+    "xl": { "value": "32", "type": "spacing" }
+  },
+  "borderRadius": {
+    "sm": { "value": "4", "type": "borderRadius" },
+    "md": { "value": "8", "type": "borderRadius" },
+    "lg": { "value": "12", "type": "borderRadius" }
+  },
+  "shadows": {
+    "sm": { "value": "0 1px 2px rgba(0,0,0,0.05)", "type": "boxShadow" },
+    "md": { "value": "0 4px 6px rgba(0,0,0,0.1)", "type": "boxShadow" },
+    "focus": { "value": "0 0 0 3px rgba(0,102,255,0.25)", "type": "boxShadow" }
+  },
+  "container": {
+    "field": {
+      "padding": { "value": "{spacing.md}", "type": "spacing" },
+      "borderWidth": { "value": "1", "type": "borderWidth" },
+      "gap": { "value": "{spacing.xs}", "type": "spacing" }
+    },
+    "section": {
+      "padding": { "value": "{spacing.lg}", "type": "spacing" },
+      "headerHeight": { "value": "48", "type": "sizing" },
+      "gap": { "value": "{spacing.md}", "type": "spacing" }
+    },
+    "repeater": {
+      "rowGap": { "value": "{spacing.sm}", "type": "spacing" },
+      "rowPadding": { "value": "{spacing.md}", "type": "spacing" }
+    }
+  }
+}
+```
+
+### Exporting from Figma
+
+1. **Install Tokens Studio** plugin
+2. **Define tokens** matching the structure above
+3. **Apply to components** using token references
+4. **Export as JSON** → `documentation/design/tokens.json`
+5. **Transform with Style Dictionary** → Compose/SwiftUI code
+
+---
+
+## States Matrix (Critical for AI)
+
+Every component needs a complete states matrix documented:
+
+### TextField States Matrix
+
+| # | variant | state | size | required | hasError | hasHelper | Screenshot |
+|---|---------|-------|------|----------|----------|-----------|------------|
+| 1 | outlined | default | md | false | false | false | `text-field-001.png` |
+| 2 | outlined | default | md | true | false | false | `text-field-002.png` |
+| 3 | outlined | focused | md | false | false | false | `text-field-003.png` |
+| 4 | outlined | filled | md | false | false | false | `text-field-004.png` |
+| 5 | outlined | error | md | false | true | true | `text-field-005.png` |
+| 6 | outlined | disabled | md | false | false | false | `text-field-006.png` |
+| 7 | outlined | readOnly | md | false | false | false | `text-field-007.png` |
+| ... | ... | ... | ... | ... | ... | ... | ... |
+
+**Export all variants as PNG** → `documentation/design/screenshots/fields/`
+
+---
+
+## Figma-to-Documentation Workflow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 1: Design in Figma                                        │
+│                                                                  │
+│  • Create component with variants                                │
+│  • Apply design tokens                                           │
+│  • Document all states                                           │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 2: Export from Figma                                      │
+│                                                                  │
+│  • Tokens Studio → tokens.json                                  │
+│  • Screenshots of each state → screenshots/                     │
+│  • Component specs → component-name.figma.json (optional)       │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 3: Create Specification YAML                              │
+│                                                                  │
+│  • Combine: tokens + behavior + visual into YAML spec           │
+│  • Reference screenshots                                         │
+│  • Add test cases                                                │
+│                                                                  │
+│  Example: documentation/design/components/text-field.yaml       │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 4: AI Generates Code                                      │
+│                                                                  │
+│  AI reads:                                                       │
+│  • tokens.json (styling)                                         │
+│  • text-field.yaml (spec)                                        │
+│  • screenshots (visual reference)                                │
+│                                                                  │
+│  AI generates:                                                   │
+│  • TextField.kt (Compose Multiplatform)                          │
+│  • FieldContainer.kt (shared container)                          │
+│  • Tests                                                         │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Component YAML Spec Format
+
+Example for TextField with container:
+
+```yaml
+# documentation/design/components/text-field.yaml
+name: TextField
+description: Single-line text input field
+
+# Reference to Figma
+figma:
+  file: "V2 Design System"
+  page: "3. Field Components"
+  component: "TextField"
+
+# Container configuration
+container:
+  component: FieldContainer
+  defaultVariant: outlined
+  allowedVariants:
+    - flat
+    - outlined
+    - filled
+    - elevated
+    - card
+
+# Field-specific anatomy (inside container's InputSlot)
+anatomy:
+  - inputBackground
+  - inputBorder
+  - inputText
+  - placeholder
+  - prefix (optional)
+  - suffix (optional)
+  - clearButton (optional)
+
+# Variants
+variants:
+  inputType:
+    - text
+    - password
+    - search
+  size:
+    - sm: { inputHeight: 32, fontSize: 14 }
+    - md: { inputHeight: 40, fontSize: 16 }
+    - lg: { inputHeight: 48, fontSize: 18 }
+
+# States (combines with container states)
+states:
+  default:
+    inputBorder: colors.neutral.border
+    inputBackground: colors.neutral.background
+  focused:
+    inputBorder: colors.primary.default
+    inputBackground: colors.neutral.background
+  filled:
+    inputBorder: colors.neutral.border
+    inputBackground: colors.neutral.background
+  error:
+    inputBorder: colors.semantic.error
+    inputBackground: colors.semantic.errorLight
+  disabled:
+    inputBackground: colors.neutral.disabled
+    inputText: colors.text.disabled
+
+# Screenshots (exported from Figma)
+screenshots:
+  - id: default-empty
+    file: screenshots/fields/text-field/default-empty.png
+    props: { variant: outlined, state: default, value: "" }
+  - id: focused
+    file: screenshots/fields/text-field/focused.png
+    props: { variant: outlined, state: focused }
+  - id: filled
+    file: screenshots/fields/text-field/filled.png
+    props: { variant: outlined, state: filled, value: "John Doe" }
+  - id: error
+    file: screenshots/fields/text-field/error.png
+    props: { variant: outlined, state: error, error: "This field is required" }
+  - id: disabled
+    file: screenshots/fields/text-field/disabled.png
+    props: { variant: outlined, state: disabled, value: "Locked" }
+  - id: with-prefix
+    file: screenshots/fields/text-field/with-prefix.png
+    props: { prefix: "$" }
+  - id: password
+    file: screenshots/fields/text-field/password.png
+    props: { inputType: password, value: "secret" }
+
+# Behavior reference
+behavior:
+  stateMachine: documentation/behavior/state-machines/text-field.yaml
+  
+# Test cases reference
+tests:
+  unit: documentation/tests/unit/text-field.yaml
+  visual: documentation/tests/golden/text-field.yaml
+```
+
+---
+
+## Questions for Your Team
+
+Before finalizing this strategy, clarify:
+
+### 1. Container Styling in V1
+
+```
+🔴 QUESTION: In V1, what properties control the FieldContainer?
+   
+   a) titleDisplayConfiguration - what does it configure?
+   b) fillModeConfiguration - what does it configure?
+   c) viewModeConfiguration - what does it configure?
+   d) Are there other hidden container properties?
+```
+
+### 2. Section Container Variants
+
+```
+🔴 QUESTION: For section layout variants, what are the exact visual differences?
+   
+   a) accordion vs collapsible - same or different?
+   b) expanded vs collapsed - just initial state?
+   c) card - does it have shadow? border?
+   d) tab - horizontal only? how does it work on mobile?
+```
+
+### 3. Repeater Row Styling
+
+```
+🔴 QUESTION: For array/repeater rows:
+   
+   a) What controls row header appearance (keysForRowHeader)?
+   b) Can rows have different styles (first/last/alternate)?
+   c) How does drag-to-reorder work?
+   d) What's the delete confirmation UX?
+```
+
+### 4. Platform Differences
+
+```
+🔴 QUESTION: Are containers styled differently per platform?
+   
+   a) Android vs iOS visual differences?
+   b) Web-specific styling (webLayout)?
+   c) Should V2 enforce consistency or allow platform variation?
+```
+
+---
+
+## Recommended Next Steps
+
+### Week 1: Foundation
+
+1. **Create Figma file** with page structure above
+2. **Install Tokens Studio** and define tokens
+3. **Design FieldContainer** with all variants/states
+4. **Export**: tokens.json + screenshots
+
+### Week 2: Core Components
+
+5. **Design TextField** (most common)
+6. **Design SectionContainer** (all variants)
+7. **Design RepeaterContainer** (all states)
+8. **Create YAML specs** for each
+
+### Week 3: Validation
+
+9. **AI generates code** from specs
+10. **Visual comparison** with Figma
+11. **Iterate** on specs where AI got it wrong
+12. **Document learnings**
+
+### Week 4: Scale
+
+13. **Apply pattern** to remaining field types
+14. **Complete states matrix** for all components
+15. **Export final design system**
+
+---
+
+## Deliverables Checklist
+
+| Deliverable | Format | Location |
+|-------------|--------|----------|
+| Design Tokens | JSON | `documentation/design/tokens.json` |
+| Component Specs | YAML | `documentation/design/components/*.yaml` |
+| Screenshots | PNG | `documentation/design/screenshots/` |
+| States Matrix | CSV/YAML | `documentation/design/states-matrix.yaml` |
+| Behavior Specs | YAML | `documentation/behavior/state-machines/` |
+| Test Cases | YAML | `documentation/tests/unit/` |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,440 @@
+# Recipe: Auto-Generated IDs
+
+## The Problem
+
+You need automatically generated unique identifiers:
+- Survey IDs: `SRV/2024/001`
+- Invoice Numbers: `INV-00001`
+- Reference codes combining location + date + sequence
+
+---
+
+## Basic Auto-Generation
+
+### Simple Configuration
+
+```json
+{
+  "surveyId": {
+    "title": "Survey ID",
+    "type": "string",
+    "description": "textfield",
+    "autoGenerate": true,
+    "autoGenerateConfig": {
+      "components": [
+        {
+          "type": "literal",
+          "value": "SRV-"
+        },
+        {
+          "type": "sequence",
+          "format": "00000",
+          "reset": "never"
+        }
+      ]
+    },
+    "accessMatrix": {
+      "readOnly": true,
+      "visibility": "VISIBLE"
+    }
+  }
+}
+```
+
+**Result:** `SRV-00001`, `SRV-00002`, `SRV-00003`, ...
+
+---
+
+## Component Types
+
+### 1. Literal
+
+Static text:
+
+```json
+{
+  "type": "literal",
+  "value": "INV-"
+}
+```
+
+### 2. Sequence
+
+Auto-incrementing number:
+
+```json
+{
+  "type": "sequence",
+  "format": "###",      // Number format (### = 001, #### = 0001)
+  "key": "unique-key",  // Unique identifier for this sequence
+  "reset": "never"      // When to reset: never, daily, monthly, yearly
+}
+```
+
+**Reset options:**
+| Value | Behavior |
+|-------|----------|
+| `never` | Continuous sequence forever |
+| `daily` | Resets to 1 each day |
+| `monthly` | Resets to 1 each month |
+| `yearly` | Resets to 1 each year |
+
+### 3. Date Format
+
+Current date/time:
+
+```json
+{
+  "type": "dateformat",
+  "format": "yyyyMMdd"  // Java date format
+}
+```
+
+**Common formats:**
+| Format | Example |
+|--------|---------|
+| `yyyy` | 2024 |
+| `MM` | 01, 12 |
+| `dd` | 05, 31 |
+| `yyyyMMdd` | 20240115 |
+| `dd-MM-yyyy` | 15-01-2024 |
+| `yyyy/MM` | 2024/01 |
+
+### 4. Expression
+
+Value from another field:
+
+```json
+{
+  "type": "expression",
+  "expression": "this.state"
+}
+```
+
+Uses the current value of the referenced field.
+
+---
+
+## Complex ID Patterns
+
+### Location + Date + Sequence
+
+```json
+{
+  "surveyId": {
+    "autoGenerateConfig": {
+      "components": [
+        {
+          "type": "expression",
+          "expression": "this.state",
+          "suffix": "/"
+        },
+        {
+          "type": "dateformat",
+          "format": "yyyy-MM-dd",
+          "suffix": "/"
+        },
+        {
+          "type": "sequence",
+          "format": "###",
+          "reset": "daily"
+        }
+      ]
+    }
+  }
+}
+```
+
+**Result:** `Maharashtra/2024-01-15/001`
+
+### Project Code + Year + Sequence
+
+```json
+{
+  "projectId": {
+    "autoGenerateConfig": {
+      "components": [
+        {
+          "type": "expression",
+          "expression": "this.projectCode"
+        },
+        {
+          "type": "literal",
+          "value": "-"
+        },
+        {
+          "type": "dateformat",
+          "format": "yy"
+        },
+        {
+          "type": "literal",
+          "value": "-"
+        },
+        {
+          "type": "sequence",
+          "format": "0000",
+          "reset": "yearly"
+        }
+      ]
+    }
+  }
+}
+```
+
+**Result:** `PROJ-24-0001`
+
+### Invoice Number with Prefix
+
+```json
+{
+  "invoiceNumber": {
+    "autoGenerateConfig": {
+      "components": [
+        {
+          "type": "literal",
+          "value": "INV"
+        },
+        {
+          "type": "dateformat",
+          "format": "yyyyMM"
+        },
+        {
+          "type": "sequence",
+          "format": "####",
+          "reset": "monthly"
+        }
+      ]
+    }
+  }
+}
+```
+
+**Result:** `INV2024010001`
+
+---
+
+## Suffixes and Separators
+
+Add separators between components:
+
+```json
+{
+  "components": [
+    {
+      "type": "expression",
+      "expression": "this.regionCode",
+      "suffix": "-"
+    },
+    {
+      "type": "dateformat",
+      "format": "yyyyMMdd",
+      "suffix": "-"
+    },
+    {
+      "type": "sequence",
+      "format": "####"
+    }
+  ]
+}
+```
+
+**Result:** `WEST-20240115-0001`
+
+---
+
+## Generation Timing
+
+### Generate Before Predicates
+
+```json
+{
+  "autoGenerateConfig": {
+    "generateBeforePredicate": true,
+    "components": [ ... ]
+  }
+}
+```
+
+When `true`, the ID is generated before other predicates run. This ensures dependent calculations can use the generated ID.
+
+### Generation on Server
+
+```json
+{
+  "formSetting": {
+    "generateAnswerOnServer": true
+  }
+}
+```
+
+When `true`, auto-generation happens on server during form submission, ensuring uniqueness in concurrent scenarios.
+
+---
+
+## Real Example from Codebase
+
+```json
+{
+  "vill": {
+    "title": "Village Survey ID",
+    "type": "string",
+    "description": "textfield",
+    "autoGenerateConfig": {
+      "name": null,
+      "generateBeforePredicate": true,
+      "components": [
+        {
+          "type": "expression",
+          "suffix": "/",
+          "expression": "this.villa",
+          "length": 0
+        },
+        {
+          "type": "dateformat",
+          "suffix": "/",
+          "format": "dd-MM-yyyy",
+          "length": 0
+        },
+        {
+          "type": "sequence",
+          "format": "###",
+          "key": "1698311079773",
+          "reset": "never",
+          "length": 3
+        }
+      ]
+    },
+    "accessMatrix": {
+      "mandatory": false,
+      "readOnly": true,
+      "visibility": "INVISIBLE"
+    },
+    "autoGenerate": true
+  }
+}
+```
+
+**Result:** `Arjunchua/15-01-2024/001`
+
+---
+
+## Best Practices
+
+### 1. Always Make Read-Only
+
+```json
+{
+  "accessMatrix": {
+    "readOnly": true
+  }
+}
+```
+
+Users shouldn't be able to edit auto-generated IDs.
+
+### 2. Use Unique Sequence Keys
+
+```json
+{
+  "type": "sequence",
+  "key": "survey-form-main-sequence"
+}
+```
+
+Different forms/fields should have different sequence keys to avoid conflicts.
+
+### 3. Consider Visibility
+
+For internal IDs users don't need to see:
+
+```json
+{
+  "accessMatrix": {
+    "visibility": "INVISIBLE"
+  }
+}
+```
+
+### 4. Plan for Scale
+
+If expecting high volume, use longer sequence formats:
+
+```json
+{
+  "format": "000000"  // Up to 999,999
+}
+```
+
+### 5. Include Date for Uniqueness
+
+Even with sequences, include date for easier debugging:
+
+```json
+{
+  "components": [
+    { "type": "dateformat", "format": "yyyyMMdd" },
+    { "type": "sequence", "format": "####" }
+  ]
+}
+```
+
+---
+
+## Troubleshooting
+
+### ID not generating
+
+1. Check `autoGenerate: true` is set
+2. Verify `autoGenerateConfig` has valid components
+3. Check if dependent expression fields have values
+
+### Duplicate IDs
+
+1. Ensure sequence key is unique to this field
+2. Consider server-side generation for high concurrency
+3. Check reset frequency matches your needs
+
+### Wrong sequence number
+
+1. Verify `reset` setting matches expected behavior
+2. Check if multiple fields share the same sequence key
+
+### Expression component empty
+
+1. Ensure the referenced field is filled before auto-generation
+2. Use `generateBeforePredicate: false` if expression depends on calculated fields
+
+---
+
+## ID Patterns for Different Use Cases
+
+### Customer Registration
+```
+CUST-2024-00001
+```
+
+### Survey/Assessment
+```
+STATE/DISTRICT/2024-01-15/001
+```
+
+### Invoice/Receipt
+```
+INV202401-0001
+```
+
+### Support Ticket
+```
+TKT-240115-0001
+```
+
+### Order Number
+```
+ORD-REGION-YYYYMMDD-####
+```
+
+### Employee ID
+```
+EMP-DEPT-####
+```
+

@@ -1,0 +1,335 @@
+{
+  "$schema": "form-schema-v2",
+  "title": "Nested Form",
+  "description": "Tests section field type: simple sections, repeating sections, nested structures, layouts",
+  "type": "object",
+  "properties": {
+    "personalInfo": {
+      "title": "Personal Information",
+      "type": "object",
+      "description": "section",
+      "hint": "Basic details about yourself",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "properties": {
+        "firstName": {
+          "title": "First Name",
+          "type": "string",
+          "description": "textfield",
+          "accessMatrix": {
+            "mandatory": true,
+            "visibility": "VISIBLE"
+          }
+        },
+        "lastName": {
+          "title": "Last Name",
+          "type": "string",
+          "description": "textfield",
+          "accessMatrix": {
+            "mandatory": true,
+            "visibility": "VISIBLE"
+          }
+        },
+        "dateOfBirth": {
+          "title": "Date of Birth",
+          "type": "string",
+          "description": "date",
+          "format": "dd/MM/yyyy",
+          "accessMatrix": {
+            "mandatory": true,
+            "visibility": "VISIBLE"
+          }
+        }
+      },
+      "order": ["firstName", "lastName", "dateOfBirth"],
+      "required": ["firstName", "lastName", "dateOfBirth"]
+    },
+    "address": {
+      "title": "Address",
+      "type": "object",
+      "description": "section",
+      "layout": "accordion",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "properties": {
+        "street": {
+          "title": "Street Address",
+          "type": "string",
+          "description": "textfield",
+          "accessMatrix": {
+            "mandatory": true,
+            "visibility": "VISIBLE"
+          }
+        },
+        "city": {
+          "title": "City",
+          "type": "string",
+          "description": "textfield",
+          "accessMatrix": {
+            "mandatory": true,
+            "visibility": "VISIBLE"
+          }
+        },
+        "state": {
+          "title": "State",
+          "type": "string",
+          "description": "string_list",
+          "enum": ["Maharashtra", "Karnataka", "Tamil Nadu", "Gujarat", "Delhi"],
+          "accessMatrix": {
+            "mandatory": true,
+            "visibility": "VISIBLE"
+          }
+        },
+        "pincode": {
+          "title": "PIN Code",
+          "type": "string",
+          "description": "textfield",
+          "pattern": "^[0-9]{6}$",
+          "validationMessage": "Enter valid 6-digit PIN",
+          "accessMatrix": {
+            "mandatory": true,
+            "visibility": "VISIBLE"
+          }
+        }
+      },
+      "order": ["street", "city", "state", "pincode"],
+      "required": ["street", "city", "state", "pincode"]
+    },
+    "familyMembers": {
+      "title": "Family Members",
+      "type": "array",
+      "description": "section",
+      "hint": "Add details of family members",
+      "accessMatrix": {
+        "mandatory": false,
+        "visibility": "VISIBLE"
+      },
+      "minRows": 0,
+      "maxRows": 10,
+      "newRowLabel": "Add Family Member",
+      "keysForRowHeader": ["name", "relation"],
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string",
+            "description": "textfield",
+            "accessMatrix": {
+              "mandatory": true,
+              "visibility": "VISIBLE"
+            }
+          },
+          "relation": {
+            "title": "Relation",
+            "type": "string",
+            "description": "string_list",
+            "layout": "radio",
+            "enum": ["Spouse", "Child", "Parent", "Sibling", "Other"],
+            "accessMatrix": {
+              "mandatory": true,
+              "visibility": "VISIBLE"
+            }
+          },
+          "age": {
+            "title": "Age",
+            "type": "number",
+            "description": "number",
+            "minimum": 0,
+            "maximum": 120,
+            "accessMatrix": {
+              "mandatory": true,
+              "visibility": "VISIBLE"
+            }
+          },
+          "occupation": {
+            "title": "Occupation",
+            "type": "string",
+            "description": "textfield",
+            "accessMatrix": {
+              "mandatory": false,
+              "visibility": "VISIBLE"
+            }
+          }
+        },
+        "order": ["name", "relation", "age", "occupation"],
+        "required": ["name", "relation", "age"]
+      }
+    },
+    "orderItems": {
+      "title": "Order Items",
+      "type": "array",
+      "description": "section",
+      "layout": "table",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE"
+      },
+      "minRows": 1,
+      "maxRows": 20,
+      "newRowLabel": "Add Item",
+      "items": {
+        "type": "object",
+        "properties": {
+          "productName": {
+            "title": "Product",
+            "type": "string",
+            "description": "textfield",
+            "accessMatrix": {
+              "mandatory": true,
+              "visibility": "VISIBLE"
+            }
+          },
+          "quantity": {
+            "title": "Qty",
+            "type": "number",
+            "description": "number",
+            "minimum": 1,
+            "accessMatrix": {
+              "mandatory": true,
+              "visibility": "VISIBLE"
+            },
+            "dependentKeys": ["lineTotal"]
+          },
+          "unitPrice": {
+            "title": "Price",
+            "type": "number",
+            "description": "number",
+            "prefixText": "₹",
+            "minimum": 0,
+            "accessMatrix": {
+              "mandatory": true,
+              "visibility": "VISIBLE"
+            },
+            "dependentKeys": ["lineTotal"]
+          },
+          "lineTotal": {
+            "title": "Total",
+            "type": "number",
+            "description": "number",
+            "prefixText": "₹",
+            "format": "#,##0.00",
+            "accessMatrix": {
+              "readOnly": true,
+              "visibility": "VISIBLE"
+            },
+            "formulaKeys": ["quantity", "unitPrice"],
+            "predicates": [{
+              "action": "CALC",
+              "actionConfig": {
+                "formula": "(this.orderItems[$i].quantity || 0) * (this.orderItems[$i].unitPrice || 0)"
+              }
+            }]
+          }
+        },
+        "order": ["productName", "quantity", "unitPrice", "lineTotal"],
+        "required": ["productName", "quantity", "unitPrice"]
+      }
+    },
+    "grandTotal": {
+      "title": "Grand Total",
+      "type": "number",
+      "description": "number",
+      "prefixText": "₹",
+      "format": "#,##0.00",
+      "accessMatrix": {
+        "readOnly": true,
+        "visibility": "VISIBLE"
+      },
+      "formulaKeys": ["orderItems"],
+      "predicates": [{
+        "action": "CALC",
+        "actionConfig": {
+          "formula": "(this.orderItems || []).reduce((sum, item) => sum + ((item.quantity || 0) * (item.unitPrice || 0)), 0)"
+        }
+      }]
+    },
+    "additionalInfo": {
+      "title": "Additional Information",
+      "type": "object",
+      "description": "section",
+      "layout": "collapsed",
+      "hint": "Optional additional details",
+      "accessMatrix": {
+        "mandatory": false,
+        "visibility": "VISIBLE"
+      },
+      "properties": {
+        "notes": {
+          "title": "Notes",
+          "type": "string",
+          "description": "richtext",
+          "accessMatrix": {
+            "mandatory": false,
+            "visibility": "VISIBLE"
+          }
+        },
+        "attachments": {
+          "title": "Attachments",
+          "type": "array",
+          "description": "multimedia",
+          "accessMatrix": {
+            "mandatory": false,
+            "visibility": "VISIBLE"
+          }
+        }
+      },
+      "order": ["notes", "attachments"]
+    },
+    "checklist": {
+      "title": "Pre-filled Checklist",
+      "type": "array",
+      "description": "section",
+      "hint": "Complete all items before submission",
+      "accessMatrix": {
+        "mandatory": true,
+        "visibility": "VISIBLE",
+        "answer": [
+          { "item": "Verified identity documents", "completed": false },
+          { "item": "Confirmed contact information", "completed": false },
+          { "item": "Reviewed terms and conditions", "completed": false }
+        ]
+      },
+      "immutableRowCount": true,
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "title": "Item",
+            "type": "string",
+            "description": "textfield",
+            "accessMatrix": {
+              "readOnly": true,
+              "visibility": "VISIBLE"
+            }
+          },
+          "completed": {
+            "title": "Done",
+            "type": "boolean",
+            "description": "boolean",
+            "accessMatrix": {
+              "mandatory": false,
+              "visibility": "VISIBLE"
+            }
+          }
+        },
+        "order": ["item", "completed"]
+      }
+    }
+  },
+  "order": [
+    "personalInfo",
+    "address",
+    "familyMembers",
+    "orderItems",
+    "grandTotal",
+    "additionalInfo",
+    "checklist"
+  ],
+  "required": ["personalInfo", "address", "orderItems"]
+}
+

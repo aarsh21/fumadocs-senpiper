@@ -1,0 +1,650 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://lowcode.com/schemas/form-v2.schema.json",
+  "title": "Form Schema V2",
+  "description": "Schema definition for low-code form builder V2",
+  "type": "object",
+  "required": ["version", "meta", "ui"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version",
+      "pattern": "^2\\.\\d+\\.\\d+$",
+      "default": "2.0.0"
+    },
+    "type": {
+      "type": "string",
+      "description": "Schema type",
+      "enum": ["form", "wizard", "page", "dashboard"],
+      "default": "form"
+    },
+    "meta": {
+      "$ref": "#/definitions/SchemaMeta"
+    },
+    "model": {
+      "$ref": "#/definitions/ModelDefinition"
+    },
+    "ui": {
+      "$ref": "#/definitions/UIDefinition"
+    },
+    "logic": {
+      "$ref": "#/definitions/LogicDefinition"
+    },
+    "integrations": {
+      "$ref": "#/definitions/IntegrationsDefinition"
+    },
+    "access": {
+      "$ref": "#/definitions/AccessDefinition"
+    }
+  },
+  "definitions": {
+    "SchemaMeta": {
+      "type": "object",
+      "description": "Form identification and metadata",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique form identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable form name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Form description"
+        },
+        "author": {
+          "type": "string",
+          "description": "Creator identifier"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Categorization tags"
+        }
+      }
+    },
+    "ModelDefinition": {
+      "type": "object",
+      "description": "Data model - defines WHAT data exists",
+      "properties": {
+        "fields": {
+          "type": "object",
+          "description": "User input fields",
+          "additionalProperties": {
+            "$ref": "#/definitions/FieldDefinition"
+          }
+        },
+        "variables": {
+          "type": "object",
+          "description": "System variables (not submitted)",
+          "additionalProperties": {
+            "$ref": "#/definitions/VariableDefinition"
+          }
+        }
+      }
+    },
+    "FieldDefinition": {
+      "type": "object",
+      "description": "Field definition",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Field type",
+          "enum": [
+            "text", "email", "phone", "richtext",
+            "number", "currency", "rating",
+            "boolean",
+            "select",
+            "date", "time", "timestamp",
+            "file", "location", "signature",
+            "label", "barcode", "qrcode",
+            "group", "repeater"
+          ]
+        },
+        "validation": {
+          "$ref": "#/definitions/FieldValidation"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "select" } } },
+          "then": {
+            "properties": {
+              "options": { "$ref": "#/definitions/OptionsConfig" },
+              "multi": { "type": "boolean", "default": false }
+            },
+            "required": ["options"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "number" } } },
+          "then": {
+            "properties": {
+              "decimals": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "currency" } } },
+          "then": {
+            "properties": {
+              "currency": { "type": "string" },
+              "decimals": { "type": "integer", "minimum": 0, "default": 2 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "timestamp" } } },
+          "then": {
+            "properties": {
+              "format": { "type": "string" },
+              "systemTime": { "type": "boolean", "default": false }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "file" } } },
+          "then": {
+            "properties": {
+              "accept": { "type": "array", "items": { "type": "string" } },
+              "maxSize": { "type": "integer" },
+              "multiple": { "type": "boolean", "default": false }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "group" } } },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "additionalProperties": { "$ref": "#/definitions/FieldDefinition" }
+              }
+            },
+            "required": ["fields"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "repeater" } } },
+          "then": {
+            "properties": {
+              "fields": {
+                "type": "object",
+                "additionalProperties": { "$ref": "#/definitions/FieldDefinition" }
+              },
+              "min": { "type": "integer", "minimum": 0, "default": 0 },
+              "max": { "type": "integer", "minimum": 1 }
+            },
+            "required": ["fields"]
+          }
+        }
+      ]
+    },
+    "FieldValidation": {
+      "type": "object",
+      "description": "Field validation rules",
+      "properties": {
+        "required": { "type": "boolean", "default": false },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "minLength": { "type": "integer", "minimum": 0 },
+        "maxLength": { "type": "integer", "minimum": 0 },
+        "pattern": { "type": "string", "format": "regex" },
+        "message": { "type": "string" }
+      }
+    },
+    "OptionsConfig": {
+      "type": "object",
+      "description": "Options source configuration for select fields",
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": ["static", "master", "api"],
+          "default": "static"
+        },
+        "values": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Static option values"
+        },
+        "masterRef": {
+          "type": "string",
+          "description": "Reference to master data"
+        },
+        "column": {
+          "type": "string",
+          "description": "Column from master"
+        },
+        "filter": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/OptionFilter" },
+          "description": "Parent field filters for cascading"
+        },
+        "apiRef": {
+          "type": "string",
+          "description": "Reference to API"
+        }
+      }
+    },
+    "OptionFilter": {
+      "type": "object",
+      "required": ["field", "column"],
+      "properties": {
+        "field": { "type": "string", "description": "Parent field key" },
+        "column": { "type": "string", "description": "Master column to match" }
+      }
+    },
+    "VariableDefinition": {
+      "type": "object",
+      "description": "System variable definition",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean", "timestamp", "object", "array"]
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["form", "session"],
+          "default": "form"
+        },
+        "defaultValue": {
+          "description": "Initial value"
+        }
+      }
+    },
+    "UIDefinition": {
+      "type": "object",
+      "description": "UI layer - defines HOW the form looks",
+      "properties": {
+        "pages": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/PageDefinition" },
+          "description": "Multi-page configuration"
+        },
+        "layout": {
+          "$ref": "#/definitions/LayoutDefinition"
+        },
+        "theme": {
+          "$ref": "#/definitions/ThemeDefinition"
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/FieldUIConfig" },
+          "description": "Field-specific UI configuration"
+        }
+      }
+    },
+    "PageDefinition": {
+      "type": "object",
+      "required": ["id", "title"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["fields", "summary", "content"],
+          "default": "fields"
+        },
+        "fields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Field keys to display on this page"
+        },
+        "navigation": {
+          "$ref": "#/definitions/PageNavigation"
+        },
+        "submit": {
+          "$ref": "#/definitions/SubmitConfig"
+        }
+      }
+    },
+    "PageNavigation": {
+      "type": "object",
+      "properties": {
+        "back": {
+          "type": "object",
+          "properties": {
+            "label": { "type": "string" },
+            "condition": { "type": "string" }
+          }
+        },
+        "next": {
+          "type": "object",
+          "properties": {
+            "label": { "type": "string" },
+            "condition": { "type": "string" }
+          }
+        }
+      }
+    },
+    "SubmitConfig": {
+      "type": "object",
+      "properties": {
+        "label": { "type": "string" },
+        "confirm": { "type": "string" },
+        "condition": { "type": "string" }
+      }
+    },
+    "LayoutDefinition": {
+      "type": "object",
+      "properties": {
+        "columns": { "type": "integer", "minimum": 1, "default": 1 },
+        "spacing": {
+          "type": "string",
+          "enum": ["compact", "comfortable", "spacious"],
+          "default": "comfortable"
+        },
+        "fieldLayout": {
+          "type": "object",
+          "properties": {
+            "labelPosition": {
+              "type": "string",
+              "enum": ["above", "inline", "floating"],
+              "default": "above"
+            }
+          }
+        }
+      }
+    },
+    "ThemeDefinition": {
+      "type": "object",
+      "properties": {
+        "primaryColor": { "type": "string" },
+        "secondaryColor": { "type": "string" },
+        "errorColor": { "type": "string" },
+        "borderRadius": { "type": "string" },
+        "fontFamily": { "type": "string" }
+      }
+    },
+    "FieldUIConfig": {
+      "type": "object",
+      "description": "Field-specific UI configuration",
+      "properties": {
+        "label": { "type": "string" },
+        "placeholder": { "type": "string" },
+        "hint": { "type": "string" },
+        "icon": { "type": "string" },
+        "prefix": { "type": "string" },
+        "suffix": { "type": "string" },
+        "layout": {
+          "type": "string",
+          "enum": ["dropdown", "radio", "checkbox", "chips"],
+          "description": "Display variant for select fields"
+        },
+        "stepper": { "type": "boolean", "description": "Show +/- for numbers" },
+        "searchable": { "type": "boolean", "description": "Enable dropdown search" },
+        "keyboard": {
+          "type": "string",
+          "enum": ["text", "email", "number", "phone", "decimal"],
+          "description": "Mobile keyboard type"
+        },
+        "multiline": { "type": "boolean" },
+        "rows": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "LogicDefinition": {
+      "type": "object",
+      "description": "Logic layer - defines behaviors",
+      "properties": {
+        "computed": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/ComputedField" }
+        },
+        "validations": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/ValidationRule" }
+        },
+        "effects": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/EffectDefinition" }
+        },
+        "visibility": {
+          "$ref": "#/definitions/VisibilityRules"
+        },
+        "cascades": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/CascadeConfig" }
+        }
+      }
+    },
+    "ComputedField": {
+      "type": "object",
+      "required": ["expression"],
+      "properties": {
+        "expression": { "type": "string", "description": "JavaScript expression" },
+        "dependsOn": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Field keys this depends on"
+        }
+      }
+    },
+    "ValidationRule": {
+      "type": "object",
+      "required": ["expression", "message"],
+      "properties": {
+        "expression": { "type": "string", "description": "JavaScript boolean expression" },
+        "message": { "type": "string" },
+        "target": { "type": "string", "description": "Field to show error on" },
+        "trigger": {
+          "type": "string",
+          "enum": ["change", "blur", "submit"],
+          "default": "blur"
+        }
+      }
+    },
+    "EffectDefinition": {
+      "type": "object",
+      "required": ["trigger", "actions"],
+      "properties": {
+        "trigger": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["change", "blur", "focus", "submit", "init"]
+            },
+            "field": { "type": "string" }
+          }
+        },
+        "condition": { "type": "string" },
+        "actions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/EffectAction" }
+        }
+      }
+    },
+    "EffectAction": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["setValue", "resetValue", "showMessage", "apiCall", "navigate"]
+        },
+        "target": { "type": "string" },
+        "value": {},
+        "message": { "type": "string" },
+        "level": {
+          "type": "string",
+          "enum": ["info", "warning", "error"]
+        }
+      }
+    },
+    "VisibilityRules": {
+      "type": "object",
+      "properties": {
+        "rules": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["expression"],
+            "properties": {
+              "expression": { "type": "string" },
+              "fields": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "CascadeConfig": {
+      "type": "object",
+      "required": ["chain", "masterRef"],
+      "properties": {
+        "chain": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Ordered field keys in cascade"
+        },
+        "masterRef": { "type": "string" },
+        "mappings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "parentColumn": { "type": "string" },
+              "valueColumn": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "IntegrationsDefinition": {
+      "type": "object",
+      "description": "External data sources",
+      "properties": {
+        "masters": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/MasterDefinition" }
+        },
+        "apis": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/ApiDefinition" }
+        }
+      }
+    },
+    "MasterDefinition": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["OPTION_FILTER", "SEARCHABLE"]
+        },
+        "searchableKeys": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "caching": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "incremental": { "type": "boolean", "default": true },
+            "ttl": { "type": "integer", "description": "TTL in seconds" }
+          }
+        }
+      }
+    },
+    "ApiDefinition": {
+      "type": "object",
+      "required": ["url", "method"],
+      "properties": {
+        "url": { "type": "string" },
+        "method": {
+          "type": "string",
+          "enum": ["GET", "POST", "PUT", "DELETE"]
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "body": { "type": "object" },
+        "responseMapping": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "caching": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "key": { "type": "string" },
+            "ttl": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "AccessDefinition": {
+      "type": "object",
+      "description": "Access control layer",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "name"],
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" }
+            }
+          }
+        },
+        "rules": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/AccessRule" }
+        }
+      }
+    },
+    "AccessRule": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" },
+        "roles": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "stages": {
+          "type": "array",
+          "items": { "type": "integer" }
+        },
+        "fields": {
+          "oneOf": [
+            { "type": "string", "const": "*" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        },
+        "permissions": {
+          "type": "object",
+          "properties": {
+            "visible": { "type": "boolean" },
+            "editable": { "type": "boolean" },
+            "required": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}
+

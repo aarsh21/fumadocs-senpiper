@@ -1,0 +1,77 @@
+---
+title: "qrcode"
+description: "Purpose"
+---
+
+
+## Purpose
+
+QR code scanner for capturing QR code data.
+
+---
+
+## Configuration
+
+**Data Type:** `type: "string"`
+
+**Description:** `description: "qrcode"`
+
+---
+
+## Consumed Properties
+
+| Property | Type | Purpose |
+|----------|------|---------|
+| `title` | string | Field label |
+| `hint` | string | Help text |
+| `accessMatrix` | object | Visibility, mandatory, readOnly |
+| `predicates` | array | Conditional logic |
+| `localisationMap` | object | Translations |
+| `qrConfig` | object | QR scanning configuration |
+
+> **Team: Please document** - What properties are in `qrConfig`?
+
+---
+
+## Answer Structure
+
+```json
+{
+  "assetCode": "ASSET-12345-XYZ"
+}
+```
+
+Scanned QR content stored as string.
+
+---
+
+## Example
+
+```json
+{
+  "assetCode": {
+    "title": "Scan Asset QR",
+    "type": "string",
+    "description": "qrcode",
+    "hint": "Point camera at asset QR code",
+    "accessMatrix": {
+      "mandatory": true
+    }
+  }
+}
+```
+
+---
+
+## Behavior Notes
+
+1. **Camera** - Opens camera in QR scanning mode
+2. **Auto-detect** - Automatically detects and reads QR code
+3. **Validation** - Can use pattern to validate scanned content
+
+---
+
+## Platform Differences
+
+> **Team: Please document any platform-specific behaviors**
+

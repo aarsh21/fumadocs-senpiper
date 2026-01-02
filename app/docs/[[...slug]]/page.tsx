@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { getMDXComponents } from '@/mdx-components';
 import type { Metadata } from 'next';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
+import { LLMCopyButton, ViewOptions } from '@/components/page-actions';
 
 export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   const params = await props.params;
@@ -11,11 +12,17 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   if (!page) notFound();
 
   const MDX = page.data.body;
+  const markdownUrl = `${page.url}.mdx`;
+  const githubUrl = `https://github.com/AarshGT/fuma-docs-senpiper/blob/main/content/docs/${page.slugs.join('/')}.mdx`;
 
   return (
     <DocsPage toc={page.data.toc} full={page.data.full}>
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
+      <div className="flex flex-row gap-2 items-center border-b pb-2 mb-6">
+        <LLMCopyButton markdownUrl={markdownUrl} />
+        <ViewOptions markdownUrl={markdownUrl} githubUrl={githubUrl} />
+      </div>
       <DocsBody>
         <MDX
           components={getMDXComponents({

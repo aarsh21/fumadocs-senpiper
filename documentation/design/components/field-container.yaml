@@ -1,0 +1,377 @@
+# Field Container Component Specification
+# This is the wrapper component around every field input
+
+name: FieldContainer
+description: |
+  Universal wrapper component that contains label, input slot, and helper text.
+  All field types are rendered inside this container.
+  
+  In V1, this was implicit and controlled by:
+  - titleDisplayConfiguration
+  - fillModeConfiguration  
+  - viewModeConfiguration
+  - formDisplayConfiguration
+  
+  In V2, this is an explicit, documented component.
+
+# ============================================================================
+# ANATOMY
+# ============================================================================
+
+anatomy:
+  # The complete structure of the component
+  structure:
+    - name: root
+      description: Outermost wrapper element
+      children:
+        - name: containerBorder
+          description: Optional border around entire container
+          optional: true
+          
+        - name: containerBackground
+          description: Background color/fill of container
+          optional: true
+          
+        - name: labelRow
+          description: Row containing label and related elements
+          children:
+            - name: requiredIndicator
+              description: Asterisk or icon showing field is required
+              optional: true
+              position: left | right
+              
+            - name: labelText
+              description: Field label/title
+              optional: false
+              
+            - name: hintIcon
+              description: Info icon that shows tooltip on hover/tap
+              optional: true
+              
+        - name: inputSlot
+          description: Slot where field-specific input component is rendered
+          note: This is filled by TextField, SelectField, etc.
+          
+        - name: helperRow
+          description: Row containing helper text or error message
+          children:
+            - name: helperIcon
+              description: Icon (info/error) before helper text
+              optional: true
+              
+            - name: helperText
+              description: Helper text OR error message (mutually exclusive)
+              optional: true
+              
+            - name: characterCount
+              description: Current/max character count
+              optional: true
+              position: right
+
+# ============================================================================
+# VARIANTS
+# ============================================================================
+
+variants:
+  # Visual container style
+  containerStyle:
+    flat:
+      border: none
+      background: transparent
+      shadow: none
+      use_case: Inside sections, minimal UI, mobile-first
+      
+    outlined:
+      border: 1px solid {colors.neutral.border}
+      background: transparent
+      shadow: none
+      use_case: Standalone fields, most common
+      
+    filled:
+      border: none
+      background: "{colors.neutral.surface}"
+      shadow: none
+      use_case: Grouped fields with background
+      
+    elevated:
+      border: none
+      background: "{colors.neutral.background}"
+      shadow: "{shadows.sm}"
+      use_case: Emphasized fields, card-like
+      
+    card:
+      border: 1px solid {colors.neutral.border}
+      background: "{colors.neutral.background}"
+      shadow: "{shadows.md}"
+      borderRadius: "{borderRadius.lg}"
+      use_case: Prominent, standalone fields
+
+  # Size variants
+  size:
+    sm:
+      labelFontSize: 12
+      inputHeight: 32
+      helperFontSize: 11
+      padding: "{spacing.sm}"
+      gap: "{spacing.xs}"
+      
+    md:
+      labelFontSize: 14
+      inputHeight: 40
+      helperFontSize: 12
+      padding: "{spacing.md}"
+      gap: "{spacing.xs}"
+      
+    lg:
+      labelFontSize: 16
+      inputHeight: 48
+      helperFontSize: 14
+      padding: "{spacing.lg}"
+      gap: "{spacing.sm}"
+
+  # Label position
+  labelPosition:
+    top:
+      description: Label above input (default, most common)
+      layout: vertical
+      
+    left:
+      description: Label to the left of input
+      layout: horizontal
+      labelWidth: 30% | auto | fixed
+      
+    hidden:
+      description: Label visually hidden but accessible
+      layout: vertical
+      labelVisibility: screenReaderOnly
+
+# ============================================================================
+# STATES
+# ============================================================================
+
+states:
+  default:
+    description: Initial state, no interaction
+    borderColor: "{colors.neutral.border}"
+    backgroundColor: "{colors.neutral.background}"
+    labelColor: "{colors.text.secondary}"
+    inputColor: "{colors.text.primary}"
+    placeholderColor: "{colors.text.disabled}"
+    
+  hover:
+    description: Mouse over container (desktop only)
+    borderColor: "{colors.neutral.borderHover}"
+    backgroundColor: "{colors.neutral.surfaceHover}"
+    cursor: text
+    
+  focused:
+    description: Input has keyboard focus
+    borderColor: "{colors.primary.default}"
+    boxShadow: "{shadows.focus}"
+    labelColor: "{colors.primary.default}"
+    
+  filled:
+    description: Input has a value
+    borderColor: "{colors.neutral.border}"
+    labelColor: "{colors.text.primary}"
+    
+  error:
+    description: Validation error
+    borderColor: "{colors.semantic.error}"
+    labelColor: "{colors.semantic.error}"
+    helperColor: "{colors.semantic.error}"
+    helperIcon: error
+    backgroundColor: "{colors.semantic.errorLight}"
+    
+  warning:
+    description: Warning state (non-blocking)
+    borderColor: "{colors.semantic.warning}"
+    helperColor: "{colors.semantic.warning}"
+    helperIcon: warning
+    
+  success:
+    description: Validation passed (optional visual)
+    borderColor: "{colors.semantic.success}"
+    helperIcon: checkmark
+    
+  disabled:
+    description: Field cannot be interacted with
+    borderColor: "{colors.neutral.disabled}"
+    backgroundColor: "{colors.neutral.disabled}"
+    labelColor: "{colors.text.disabled}"
+    inputColor: "{colors.text.disabled}"
+    cursor: not-allowed
+    opacity: 0.7
+    
+  readOnly:
+    description: Field displays value but cannot be edited
+    borderColor: transparent
+    backgroundColor: "{colors.neutral.surface}"
+    labelColor: "{colors.text.secondary}"
+    cursor: default
+    
+  loading:
+    description: Field is loading data (e.g., async validation)
+    showLoadingIndicator: true
+    inputDisabled: true
+
+# ============================================================================
+# SPACING
+# ============================================================================
+
+spacing:
+  # Internal spacing
+  containerPadding:
+    sm: "{spacing.sm}"
+    md: "{spacing.md}"
+    lg: "{spacing.lg}"
+    
+  labelToInput:
+    description: Gap between label and input
+    value: "{spacing.xs}"
+    
+  inputToHelper:
+    description: Gap between input and helper text
+    value: "{spacing.xs}"
+    
+  # External spacing (margin)
+  containerMargin:
+    description: Space between this field and next field
+    vertical: "{spacing.md}"
+    horizontal: 0
+
+# ============================================================================
+# RESPONSIVE
+# ============================================================================
+
+responsive:
+  mobile:
+    defaultSize: md
+    labelPosition: top
+    containerStyle: flat
+    
+  tablet:
+    defaultSize: md
+    labelPosition: top | left
+    containerStyle: outlined
+    
+  desktop:
+    defaultSize: md
+    labelPosition: top | left
+    containerStyle: outlined
+
+# ============================================================================
+# ACCESSIBILITY
+# ============================================================================
+
+accessibility:
+  - labelFor: Input must be associated with label via id
+  - ariaDescribedBy: Helper text linked to input
+  - ariaRequired: Set when field is required
+  - ariaInvalid: Set when field has error
+  - focusVisible: Clear focus indicator for keyboard users
+  - colorContrast: All text must meet WCAG AA (4.5:1)
+
+# ============================================================================
+# ANIMATIONS
+# ============================================================================
+
+animations:
+  focusTransition:
+    property: "border-color, box-shadow"
+    duration: 150ms
+    easing: ease-out
+    
+  errorTransition:
+    property: "border-color, background-color"
+    duration: 200ms
+    easing: ease-out
+    
+  helperTextEnter:
+    property: "opacity, transform"
+    duration: 150ms
+    from: { opacity: 0, translateY: -4 }
+    to: { opacity: 1, translateY: 0 }
+
+# ============================================================================
+# PLATFORM NOTES
+# ============================================================================
+
+platformNotes:
+  compose:
+    - Use Modifier.border() for outlined variant
+    - Use Card() composable for card/elevated variants
+    - Focus indicator via focusable() + custom indication
+    
+  swiftUI:
+    - Use .overlay() for borders
+    - Use .background() with RoundedRectangle for filled
+    - Focus state via @FocusState
+
+# ============================================================================
+# V1 MIGRATION MAPPING
+# ============================================================================
+
+v1Migration:
+  # Map V1 properties to V2 FieldContainer
+  titleDisplayConfiguration:
+    maps_to: labelRow styling
+    properties:
+      - fontColor → labelColor
+      - fontSize → labelFontSize
+      - fontWeight → labelFontWeight
+      
+  fillModeConfiguration:
+    maps_to: container styling in edit mode
+    properties:
+      - backgroundColor → containerBackground
+      - borderColor → containerBorder
+      - borderRadius → containerBorderRadius
+      
+  viewModeConfiguration:
+    maps_to: readOnly state styling
+    properties:
+      - Same as fillModeConfiguration but for readOnly state
+      
+  formDisplayConfiguration:
+    maps_to: form-level defaults
+    properties:
+      - Applied to all FieldContainers as base
+
+# ============================================================================
+# OPEN QUESTIONS (V1 CLARIFICATION NEEDED)
+# ============================================================================
+
+questions:
+  - id: Q1
+    question: "In V1, does titleDisplayConfiguration affect the container or just the label?"
+    impact: Determines if we need separate label vs container styling
+    
+  - id: Q2
+    question: "Are there different container styles for different field types?"
+    impact: Might need field-type-specific container variants
+    
+  - id: Q3
+    question: "How does the container change between fill mode and view mode?"
+    impact: Need to define mode-based state variations
+    
+  - id: Q4
+    question: "Is there a 'compact' mode where label is inside the input?"
+    impact: Would need additional labelPosition variant
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

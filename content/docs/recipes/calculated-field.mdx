@@ -1,0 +1,486 @@
+---
+title: "Recipe: Calculated Fields"
+description: "The Problem"
+---
+
+
+## The Problem
+
+You need fields that automatically calculate their values based on other fields:
+- Order total = quantity × price
+- Age from birthdate
+- Full name from first + last name
+- Running totals in a table
+
+---
+
+## Basic Calculation
+
+### Simple Formula
+
+Calculate total from quantity and price:
+
+```json
+{
+  "quantity": {
+    "title": "Quantity",
+    "type": "number",
+    "description": "number",
+    "dependentKeys": ["total"]
+  },
+  
+  "price": {
+    "title": "Unit Price",
+    "type": "number",
+    "description": "number",
+    "dependentKeys": ["total"]
+  },
+  
+  "total": {
+    "title": "Total",
+    "type": "number",
+    "description": "number",
+    "formulaKeys": ["quantity", "price"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "this.quantity * this.price"
+      }
+    }],
+    "accessMatrix": {
+      "readOnly": true
+    }
+  }
+}
+```
+
+**Key elements:**
+1. Source fields have `dependentKeys` listing the calculated field
+2. Calculated field has `formulaKeys` listing its inputs
+3. Calculated field has `CALC` predicate with the formula
+4. Usually `readOnly: true` to prevent manual changes
+
+---
+
+## Null-Safe Calculations
+
+Always handle potentially missing values:
+
+```json
+{
+  "formula": "(this.quantity || 0) * (this.price || 0)"
+}
+```
+
+Or with more explicit handling:
+
+```json
+{
+  "formula": "this.quantity != null && this.price != null ? this.quantity * this.price : 0"
+}
+```
+
+---
+
+## Common Calculation Patterns
+
+### Percentage Discount
+
+```json
+{
+  "subtotal": {
+    "dependentKeys": ["total"]
+  },
+  "discountPercent": {
+    "dependentKeys": ["total"]
+  },
+  "total": {
+    "formulaKeys": ["subtotal", "discountPercent"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "(this.subtotal || 0) * (1 - (this.discountPercent || 0) / 100)"
+      }
+    }]
+  }
+}
+```
+
+### Tax Calculation
+
+```json
+{
+  "subtotal": {
+    "dependentKeys": ["tax", "grandTotal"]
+  },
+  "taxRate": {
+    "dependentKeys": ["tax", "grandTotal"]
+  },
+  "tax": {
+    "formulaKeys": ["subtotal", "taxRate"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "(this.subtotal || 0) * ((this.taxRate || 0) / 100)"
+      }
+    }]
+  },
+  "grandTotal": {
+    "formulaKeys": ["subtotal", "tax"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "(this.subtotal || 0) + (this.tax || 0)"
+      }
+    }]
+  }
+}
+```
+
+### String Concatenation
+
+```json
+{
+  "firstName": {
+    "dependentKeys": ["fullName"]
+  },
+  "lastName": {
+    "dependentKeys": ["fullName"]
+  },
+  "fullName": {
+    "formulaKeys": ["firstName", "lastName"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "(this.firstName || '') + ' ' + (this.lastName || '')"
+      }
+    }],
+    "accessMatrix": { "readOnly": true }
+  }
+}
+```
+
+### Composite Key
+
+```json
+{
+  "surveyId": {
+    "formulaKeys": ["state", "district", "date"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "this.state + '/' + this.district + '/' + this.date"
+      }
+    }]
+  }
+}
+```
+
+---
+
+## Conditional Calculations
+
+### If/Else Logic
+
+```json
+{
+  "grade": {
+    "formulaKeys": ["score"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "if(this.score >= 90) {'A'} else if(this.score >= 80) {'B'} else if(this.score >= 70) {'C'} else if(this.score >= 60) {'D'} else {'F'}"
+      }
+    }]
+  }
+}
+```
+
+### Ternary Operator
+
+```json
+{
+  "status": {
+    "formulaKeys": ["age"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "this.age >= 18 ? 'Adult' : 'Minor'"
+      }
+    }]
+  }
+}
+```
+
+### Tiered Pricing
+
+```json
+{
+  "pricePerUnit": {
+    "formulaKeys": ["quantity"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "this.quantity >= 100 ? 8 : (this.quantity >= 50 ? 9 : 10)"
+      }
+    }]
+  }
+}
+```
+
+---
+
+## Array Calculations
+
+### Row-Level Calculation
+
+Inside a repeating section, calculate per-row:
+
+```json
+{
+  "lineItems": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "qty": {
+          "type": "number",
+          "dependentKeys": ["amount"]
+        },
+        "rate": {
+          "type": "number",
+          "dependentKeys": ["amount"]
+        },
+        "amount": {
+          "type": "number",
+          "formulaKeys": ["qty", "rate"],
+          "predicates": [{
+            "action": "CALC",
+            "actionConfig": {
+              "formula": "this.lineItems[$i].qty * this.lineItems[$i].rate"
+            }
+          }],
+          "accessMatrix": { "readOnly": true }
+        }
+      }
+    }
+  }
+}
+```
+
+**Note the `$i` index** - this refers to the current row.
+
+### Sum of Array Field
+
+To sum all amounts across rows, you typically need ASYNC_CALC or a server-side calculation:
+
+```json
+{
+  "grandTotal": {
+    "predicates": [{
+      "action": "ASYNC_CALC",
+      "actionConfig": {
+        "operation": "SUM",
+        "key": "amount",
+        "field": "lineItems"
+      }
+    }]
+  }
+}
+```
+
+For simple client-side sum:
+
+```json
+{
+  "formula": "(this.lineItems || []).reduce((sum, item) => sum + (item.amount || 0), 0)"
+}
+```
+
+---
+
+## Date Calculations
+
+### Days Between Dates
+
+```json
+{
+  "duration": {
+    "formulaKeys": ["startDate", "endDate"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "Math.floor((new Date(this.endDate) - new Date(this.startDate)) / (1000 * 60 * 60 * 24))"
+      }
+    }]
+  }
+}
+```
+
+### Age from Birthdate
+
+```json
+{
+  "age": {
+    "formulaKeys": ["birthDate"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "Math.floor((Date.now() - new Date(this.birthDate)) / (365.25 * 24 * 60 * 60 * 1000))"
+      }
+    }]
+  }
+}
+```
+
+### Due Date
+
+```json
+{
+  "dueDate": {
+    "formulaKeys": ["startDate", "durationDays"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "new Date(new Date(this.startDate).getTime() + (this.durationDays * 24 * 60 * 60 * 1000)).toISOString()"
+      }
+    }]
+  }
+}
+```
+
+---
+
+## Score Calculations
+
+### Weighted Score
+
+```json
+{
+  "weightedScore": {
+    "formulaKeys": ["q1Score", "q2Score", "q3Score"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "((this.q1Score || 0) * 0.3) + ((this.q2Score || 0) * 0.3) + ((this.q3Score || 0) * 0.4)"
+      }
+    }]
+  }
+}
+```
+
+### Percentage
+
+```json
+{
+  "percentage": {
+    "formulaKeys": ["obtained", "total"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "this.total > 0 ? ((this.obtained / this.total) * 100).toFixed(2) : 0"
+      }
+    }]
+  }
+}
+```
+
+### Count Yes/No
+
+```json
+{
+  "yesCount": {
+    "formulaKeys": ["q1", "q2", "q3", "q4", "q5"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "[this.q1, this.q2, this.q3, this.q4, this.q5].filter(v => v === 'Yes').length"
+      }
+    }]
+  }
+}
+```
+
+---
+
+## Bucket/Range Calculations
+
+Convert a number to a category:
+
+```json
+{
+  "bucket": {
+    "formulaKeys": ["value"],
+    "predicates": [{
+      "action": "CALC",
+      "actionConfig": {
+        "formula": "if(this.value > 0 && this.value <= 25) {25} else if(this.value > 25 && this.value <= 50) {50} else if(this.value > 50 && this.value <= 75) {75} else if(this.value > 75 && this.value <= 100) {100} else {0}"
+      }
+    }]
+  }
+}
+```
+
+---
+
+## Troubleshooting
+
+### Formula not calculating
+
+1. Check `dependentKeys` on source fields
+2. Check `formulaKeys` on calculated field
+3. Verify formula syntax (JavaScript)
+4. Check for null values causing issues
+
+### NaN result
+
+- Add null checks: `(this.value || 0)`
+- Verify source fields are numbers, not strings
+- Check for division by zero
+
+### Calculation delayed
+
+- Formulas run on field change
+- If editing via API, may need explicit recalculation trigger
+
+### Circular dependency
+
+Avoid: Field A depends on Field B which depends on Field A
+
+---
+
+## Best Practices
+
+1. **Always use `formulaKeys`** - Ensures recalculation when inputs change
+2. **Make calculated fields `readOnly`** - Prevents user overrides
+3. **Handle null values** - Use `|| 0` or `|| ''`
+4. **Keep formulas readable** - Use variables if complex
+5. **Test edge cases** - Zero, null, negative numbers
+6. **Consider rounding** - Use `.toFixed(2)` for currency
+
+---
+
+## Real Example from Codebase
+
+From your schemas:
+
+```json
+{
+  "title": "Location Key",
+  "type": "string",
+  "description": "textfield",
+  "formulaKeys": ["s", "di", "bl", "villa"],
+  "predicates": [{
+    "action": "CALC",
+    "actionConfig": {
+      "formula": "this.s+'/'+this.di+'/'+this.bl+'/'+this.villa"
+    }
+  }],
+  "accessMatrix": {
+    "mandatory": false,
+    "readOnly": false,
+    "visibility": "VISIBLE"
+  }
+}
+```
+

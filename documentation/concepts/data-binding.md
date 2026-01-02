@@ -1,0 +1,633 @@
+# Data Binding
+
+## The Binding Model
+
+Data binding is the system that connects your schema to actual data. When a user fills a form, their inputs become an **answer object** that mirrors the schema structure.
+
+Understanding this relationship is fundamental to:
+- Building correct schemas
+- Writing predicates that reference values
+- Processing form submissions
+- Debugging data issues
+
+---
+
+## Schema to Answer Mapping
+
+### Basic Mapping
+
+For every field in your schema, there's a corresponding entry in the answer:
+
+**Schema:**
+```json
+{
+  "properties": {
+    "customerName": {
+      "title": "Customer Name",
+      "type": "string",
+      "description": "textfield"
+    },
+    "orderAmount": {
+      "title": "Order Amount",
+      "type": "number",
+      "description": "number"
+    },
+    "isUrgent": {
+      "title": "Is Urgent?",
+      "type": "boolean",
+      "description": "string_list",
+      "enum": ["Yes", "No"]
+    }
+  }
+}
+```
+
+**Answer:**
+```json
+{
+  "customerName": "Rajesh Kumar",
+  "orderAmount": 15000,
+  "isUrgent": "Yes"
+}
+```
+
+**The key insight:** The **property key** in the schema becomes the **property key** in the answer.
+
+---
+
+### Nested Object Mapping
+
+When you have sections (objects), the nesting is preserved:
+
+**Schema:**
+```json
+{
+  "properties": {
+    "customer": {
+      "type": "object",
+      "description": "section",
+      "properties": {
+        "name": { "type": "string" },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "email": { "type": "string" },
+            "phone": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+**Answer:**
+```json
+{
+  "customer": {
+    "name": "Rajesh Kumar",
+    "contact": {
+      "email": "rajesh@example.com",
+      "phone": "+919876543210"
+    }
+  }
+}
+```
+
+**Path to access:** `this.customer.contact.email`
+
+---
+
+### Array Mapping
+
+For repeating sections (arrays), each row becomes an array element:
+
+**Schema:**
+```json
+{
+  "properties": {
+    "lineItems": {
+      "type": "array",
+      "description": "section",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product": { "type": "string" },
+          "quantity": { "type": "number" },
+          "price": { "type": "number" }
+        }
+      }
+    }
+  }
+}
+```
+
+**Answer:**
+```json
+{
+  "lineItems": [
+    { "product": "Widget A", "quantity": 5, "price": 100 },
+    { "product": "Widget B", "quantity": 3, "price": 150 },
+    { "product": "Widget C", "quantity": 2, "price": 200 }
+  ]
+}
+```
+
+**Accessing rows:**
+- `this.lineItems[0].product` → "Widget A"
+- `this.lineItems[$i].quantity` → Current row's quantity (in predicate context)
+- `this.lineItems.length` → 3
+
+---
+
+## The Field Key
+
+### What Is a Key?
+
+The key is the identifier that:
+1. Names the field in the schema
+2. Names the property in the answer
+3. Is used in predicates and formulas
+4. Appears in API responses
+
+```json
+{
+  "properties": {
+    "s": {          // ← This is the key
+      "title": "State",
+      "type": "string"
+    }
+  }
+}
+```
+
+### Key Conventions
+
+Looking at real schemas, keys tend to be:
+
+**Short abbreviations:**
+```json
+{
+  "s": "State",
+  "d": "District", 
+  "b": "Block",
+  "v": "Village"
+}
+```
+
+**Why short keys?**
+- Smaller JSON payloads
+- Faster transmission
+- Less storage
+- Keeps formulas concise
+
+**The tradeoff:** Less readable without documentation.
+
+**Best practice:** Use a mapping document:
+```
+s  → State
+d  → District
+b  → Block
+v  → Village
+n  → Name
+a  → Amount
+```
+
+### Key vs Title
+
+Don't confuse them:
+
+| Property | Purpose | Example |
+|----------|---------|---------|
+| Key | Technical identifier | `"custName"` |
+| Title | Human-readable label | `"Customer Full Name"` |
+
+The title is what users see. The key is what code uses.
+
+---
+
+## Default Values
+
+### From AccessMatrix
+
+Set default values via accessMatrix:
+
+```json
+{
+  "title": "Country",
+  "type": "string",
+  "accessMatrix": {
+    "answer": "India"
+  }
+}
+```
+
+When form loads, the answer starts as:
+```json
+{
+  "country": "India"
+}
+```
+
+### From Predicates
+
+Calculate initial values:
+
+```json
+{
+  "title": "Created Date",
+  "type": "string",
+  "description": "timestamp",
+  "predicates": [{
+    "action": "CALC",
+    "actionConfig": {
+      "formula": "new Date().toISOString()"
+    }
+  }],
+  "accessMatrix": {
+    "readOnly": true
+  }
+}
+```
+
+### From User Profile
+
+Auto-fill from logged-in user:
+
+```json
+{
+  "title": "Your Name",
+  "type": "string",
+  "userProfileKey": "fullName",
+  "accessMatrix": {
+    "userProfileDriven": true,
+    "readOnly": true
+  }
+}
+```
+
+---
+
+## Data Types and Coercion
+
+### String Fields
+
+Always store as strings:
+```json
+"name": "John"
+"email": "john@example.com"
+"phone": "+919876543210"
+```
+
+### Number Fields
+
+Store as numbers (not strings):
+```json
+"quantity": 5        // Good
+"quantity": "5"      // Bad - string, will cause issues in calculations
+```
+
+Be careful with form inputs—HTML forms return strings. The runtime should coerce to numbers.
+
+### Boolean Fields
+
+Store as actual booleans:
+```json
+"isActive": true     // Good
+"isActive": "true"   // Bad - string
+"isActive": "Yes"    // This is a string, not boolean
+```
+
+**Note:** A `string_list` with "Yes"/"No" options stores `"Yes"` or `"No"` (strings), not `true`/`false`.
+
+### Date/Time Fields
+
+Typically stored as ISO strings or timestamps:
+```json
+"createdDate": "2024-01-15T10:30:00Z"    // ISO string
+"createdDate": 1705315800000              // Milliseconds since epoch
+```
+
+The `format` property controls display, not storage.
+
+---
+
+## Answer Lifecycle
+
+### 1. Form Load (New)
+
+When creating a new form answer:
+
+```
+┌─────────────────────────────────────────┐
+│  1. Fetch schema                        │
+│  2. Initialize empty answer {}          │
+│  3. Apply default values from accessMatrix │
+│  4. Run predicates (CALC, etc.)         │
+│  5. Apply user profile values           │
+│  6. Render form with initial answer     │
+└─────────────────────────────────────────┘
+```
+
+### 2. Form Load (Edit)
+
+When editing an existing answer:
+
+```
+┌─────────────────────────────────────────┐
+│  1. Fetch schema                        │
+│  2. Fetch existing answer               │
+│  3. Apply updateAccessMatrices          │
+│  4. Run predicates with existing values │
+│  5. Render form with answer             │
+└─────────────────────────────────────────┘
+```
+
+### 3. User Interaction
+
+When user changes a field:
+
+```
+┌─────────────────────────────────────────┐
+│  1. Update answer[fieldKey] = newValue  │
+│  2. Find fields with this in dependentKeys │
+│  3. Run predicates on dependent fields  │
+│  4. Update UI to reflect changes        │
+└─────────────────────────────────────────┘
+```
+
+### 4. Form Submission
+
+When user submits:
+
+```
+┌─────────────────────────────────────────┐
+│  1. Run all validation predicates       │
+│  2. Check mandatory fields              │
+│  3. Run server-side predicates          │
+│  4. Save answer to database             │
+│  5. Trigger workflows if configured     │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## Special Answer Properties
+
+Beyond your form fields, answers may contain system properties:
+
+```json
+{
+  // Your fields
+  "customerName": "Rajesh",
+  "orderAmount": 15000,
+  
+  // System properties (examples)
+  "_$status": "Submitted",
+  "_$createdOn": 1705315800000,
+  "_$createdBy": "user-uuid",
+  "_$updatedOn": 1705316000000
+}
+```
+
+Common system properties:
+| Property | Purpose |
+|----------|---------|
+| `_$status` | Workflow status |
+| `_$createdOn` | Creation timestamp |
+| `_$createdBy` | Creator user ID |
+| `_$updatedOn` | Last update timestamp |
+
+You can reference these in predicates:
+```javascript
+this._$status == 'Approved'
+```
+
+---
+
+## Multi-Select Binding
+
+For fields that allow multiple selections:
+
+**Schema:**
+```json
+{
+  "title": "Skills",
+  "type": "array",
+  "description": "string_list",
+  "layout": "checkbox",
+  "enum": ["JavaScript", "Python", "Java", "Go"]
+}
+```
+
+**Answer:**
+```json
+{
+  "skills": ["JavaScript", "Python"]
+}
+```
+
+The answer is an array of selected values.
+
+---
+
+## Master Data Binding
+
+When using master data, the stored value is just the selected option:
+
+**Schema:**
+```json
+{
+  "title": "State",
+  "type": "string",
+  "description": "string_list",
+  "masterId": "location-master-uuid",
+  "columnKey": "stateName"
+}
+```
+
+**Answer:**
+```json
+{
+  "state": "Maharashtra"
+}
+```
+
+The master data provides options, but the answer just stores the selected value—not the entire master row.
+
+### Storing Additional Master Data
+
+If you need more than just the selected value, use multiple fields or a section:
+
+```json
+{
+  "customer": {
+    "type": "object",
+    "properties": {
+      "customerId": {
+        "masterId": "customer-master",
+        "columnKey": "id"
+      },
+      "customerName": {
+        "predicates": [{
+          "action": "CALC",
+          "actionConfig": {
+            "formula": "/* derive from master selection */"
+          }
+        }]
+      }
+    }
+  }
+}
+```
+
+---
+
+## Binding in Formulas
+
+When writing CALC formulas, you're reading and writing to the answer:
+
+```json
+{
+  "title": "Total",
+  "predicates": [{
+    "action": "CALC",
+    "actionConfig": {
+      "formula": "this.price * this.quantity"
+    }
+  }]
+}
+```
+
+**What happens:**
+1. Read `this.price` from answer (e.g., 100)
+2. Read `this.quantity` from answer (e.g., 5)
+3. Calculate: 100 * 5 = 500
+4. Write 500 to answer at this field's key
+
+---
+
+## Common Binding Issues
+
+### Issue: Field value is undefined
+
+**Cause:** Field key mismatch or field not in answer.
+
+**Debug:**
+```javascript
+console.log(this.feildName)  // undefined - typo!
+console.log(this.fieldName)  // correct
+```
+
+### Issue: Calculation returns NaN
+
+**Cause:** Operating on null/undefined values.
+
+**Fix:**
+```javascript
+// Before
+this.price * this.quantity
+
+// After (with defaults)
+(this.price || 0) * (this.quantity || 0)
+```
+
+### Issue: Array operations fail
+
+**Cause:** Array might not exist yet.
+
+**Fix:**
+```javascript
+// Before
+this.items.length
+
+// After
+(this.items || []).length
+```
+
+### Issue: Nested value access fails
+
+**Cause:** Parent object is null.
+
+**Fix:**
+```javascript
+// Before
+this.customer.address.city
+
+// After
+this.customer && this.customer.address && this.customer.address.city
+// Or use optional chaining if supported:
+this.customer?.address?.city
+```
+
+---
+
+## Best Practices
+
+### 1. Keep Keys Stable
+
+Once a form has data, changing keys breaks existing answers:
+
+```json
+// Original
+{ "custName": "John" }
+
+// If you rename to "customerName", old data won't match
+{ "customerName": null }  // Old "custName" value is lost
+```
+
+### 2. Document Your Keys
+
+Maintain a key dictionary:
+
+```
+Form: Customer Registration
+-------------------------------
+cn  → Customer Name
+ce  → Customer Email
+ca  → Customer Address (section)
+ca.l1  → Address Line 1
+ca.c   → City
+```
+
+### 3. Use Consistent Naming
+
+Pick a convention and stick to it:
+- All lowercase: `customername`
+- camelCase: `customerName`
+- Abbreviations: `cn`
+
+### 4. Initialize Arrays Properly
+
+For array fields that predicates depend on:
+
+```json
+{
+  "accessMatrix": {
+    "answer": []
+  }
+}
+```
+
+This ensures `this.items.length` doesn't fail on load.
+
+---
+
+## Quick Reference
+
+| Schema Property | Answer Result |
+|-----------------|---------------|
+| `"key": { "type": "string" }` | `"key": "text value"` |
+| `"key": { "type": "number" }` | `"key": 123` |
+| `"key": { "type": "boolean" }` | `"key": true` |
+| `"key": { "type": "object" }` | `"key": { ... }` |
+| `"key": { "type": "array" }` | `"key": [ ... ]` |
+
+---
+
+## Next Steps
+
+- **[Field Addressing](field-addressing.md)** - Paths and array indices
+- **[Expressions](expressions.md)** - Using bindings in formulas
+- **[Form Structure](form-structure.md)** - Schema organization
+
