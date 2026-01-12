@@ -3,7 +3,7 @@
 # For npm/pnpm or yarn, refer to the Dockerfile instead
 # -----------------------------------------------------------------------------
 
-FROM oven/bun:1 AS base
+FROM oven/bun:1-alpine AS base
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun run postinstall
-RUN cd .opencode && bun install --frozen-lockfile
+
 RUN bun run build
 
 FROM base AS runner
@@ -26,8 +26,8 @@ ENV NODE_ENV=production \
   PORT=3000 \
   HOSTNAME="0.0.0.0"
 
-RUN groupadd --system --gid 1001 nodejs && \
-  useradd --system --uid 1001 --no-log-init -g nodejs nextjs
+RUN addgroup -S -g 1001 nodejs && \
+  adduser -S -u 1001 -G nodejs nextjs
 
 COPY --from=ghcr.io/anomalyco/opencode /usr/local/bin/opencode /usr/local/bin/opencode
 RUN chmod +x /usr/local/bin/opencode
