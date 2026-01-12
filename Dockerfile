@@ -11,9 +11,6 @@ FROM base AS deps
 COPY package.json bun.lock* ./
 RUN bun install --no-save --frozen-lockfile --ignore-scripts
 
-FROM base AS opencode-deps
-RUN bun install -g opencode-ai
-
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -32,8 +29,7 @@ ENV NODE_ENV=production \
 RUN groupadd --system --gid 1001 nodejs && \
   useradd --system --uid 1001 --no-log-init -g nodejs nextjs
 
-COPY --from=opencode-deps /root/.bun/install/global/node_modules /usr/local/lib/opencode
-COPY --from=opencode-deps /root/.bun/bin/opencode /usr/local/bin/opencode
+COPY --from=ghcr.io/anomalyco/opencode /usr/local/bin/opencode /usr/local/bin/opencode
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
