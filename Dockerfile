@@ -40,12 +40,12 @@ ENV NODE_ENV=production \
   PORT=3000 \
   HOSTNAME="0.0.0.0"
 
-# Install OpenCode CLI for AI-powered documentation features
-# Using bun global install (simpler than curl install in Bun image)
-RUN bun install -g opencode-ai
-
 RUN groupadd --system --gid 1001 nodejs && \
   useradd --system --uid 1001 --no-log-init -g nodejs nextjs
+
+ENV BUN_INSTALL=/home/nextjs/.bun
+ENV PATH=$BUN_INSTALL/bin:$PATH
+RUN mkdir -p /home/nextjs/.bun && chown -R nextjs:nodejs /home/nextjs
 
 COPY --from=builder /app/public ./public
 
@@ -57,6 +57,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.opencode ./.opencode
 COPY --from=builder --chown=nextjs:nodejs /app/content ./content
 
 USER nextjs
+
+RUN bun install -g opencode-ai
 
 EXPOSE 3000
 
