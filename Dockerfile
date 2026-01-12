@@ -43,9 +43,7 @@ ENV NODE_ENV=production \
 RUN groupadd --system --gid 1001 nodejs && \
   useradd --system --uid 1001 --no-log-init -g nodejs nextjs
 
-ENV BUN_INSTALL=/home/nextjs/.bun
-ENV PATH=$BUN_INSTALL/bin:$PATH
-RUN mkdir -p /home/nextjs/.bun && chown -R nextjs:nodejs /home/nextjs
+RUN bun install -g opencode-ai
 
 COPY --from=builder /app/public ./public
 
@@ -57,8 +55,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.opencode ./.opencode
 COPY --from=builder --chown=nextjs:nodejs /app/content ./content
 
 USER nextjs
-
-RUN bun install -g opencode-ai
 
 EXPOSE 3000
 
