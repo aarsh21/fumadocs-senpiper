@@ -42,4 +42,4 @@ USER nextjs
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "opencode serve & bun ./server.js"]
+CMD ["sh", "-c", "/usr/local/bin/opencode serve & bun ./server.js"]
