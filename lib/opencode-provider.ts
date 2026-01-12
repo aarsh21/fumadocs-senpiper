@@ -29,4 +29,4 @@ export const opencode = createOpencode({
 });
 
 export const DEFAULT_MODEL_ID =
-  process.env.OPENCODE_MODEL_ID | "opencode/minimax-m2.1-free";
+  process.env.OPENCODE_MODEL_ID || "opencode/minimax-m2.1-free";
