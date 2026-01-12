@@ -1,8 +1,7 @@
 ---
 title: "V2 Runtime Development Strategy"
-description: "A phased, incremental strategy to build the V2 form runtime. We are evaluating two approaches in parallel:"
+description: "A phased, incremental strategy to build the V2 form runtime."
 ---
-
 
 A phased, incremental strategy to build the V2 form runtime. We are evaluating two approaches in parallel:
 
@@ -129,7 +128,7 @@ Create form state management - holds current values, dirty flags, errors.
 **Files:** `runtime-core/src/commonMain/kotlin/com/lowcode/runtime/core/state/`
 
 **Deliverables:**
-- `FormState.kt` - Holds field values as `Map<String, Any?>`
+- `FormState.kt` - Holds field values as Map\<String, Any?>
 - `FieldState.kt` - Individual field state (value, dirty, touched, errors)
 - `StateManager.kt` - Update state, notify observers
 

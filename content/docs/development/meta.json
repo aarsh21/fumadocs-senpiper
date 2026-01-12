@@ -1,8 +1,8 @@
 {
   "title": "Development",
   "pages": [
-    "v2-runtime-strategy",
     "ai-development-guide",
-    "kmm-development-plan"
+    "v2-runtime-plan",
+    "v2-runtime-strategy"
   ]
 }

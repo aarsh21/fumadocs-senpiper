@@ -3,7 +3,7 @@
   "pages": [
     "current-limitations",
     "proposed-schema-v2",
-    "option-filter-analysis",
-    "master-data-strategy"
+    "master-data-strategy",
+    "option-filter-analysis"
   ]
 }

@@ -1,10 +1,9 @@
 ---
 title: "Proposed Schema V2"
-description: "A redesigned schema addressing the [current limitations](/docs/current-limitations)."
+description: "A redesigned schema addressing the current limitations."
 ---
 
-
-A redesigned schema addressing the [current limitations](/docs/current-limitations).
+A redesigned schema addressing the [current limitations](./current-limitations.md).
 
 ---
 
@@ -1058,7 +1057,7 @@ V2 keeps these separate:
 
 ### Cascading Fields (Option Filter)
 
-> **See [OPTION_FILTER Deep Analysis](/docs/option-filter-analysis) for complete behavior spec.**
+> **See [OPTION_FILTER Deep Analysis](./option-filter-analysis.md) for complete behavior spec.**
 
 #### What Are Cascading Fields?
 
@@ -1284,7 +1283,7 @@ integrations:
 
 ### Master Data
 
-> **See [Master Data Strategy](/docs/master-data-strategy) for complete solution.**
+> **See [Master Data Strategy](./master-data-strategy.md) for complete solution.**
 
 #### The Master Data Problem
 
@@ -1370,7 +1369,7 @@ integrations:
 
 | Strategy | When to Use | Example |
 |----------|-------------|---------|
-| `eager` | Small datasets (under 1000 rows), always needed | Countries, Categories |
+| `eager` | Small datasets (\<1000 rows), always needed | Countries, Categories |
 | `lazy` | Medium datasets, might not be needed | Products, Vendors |
 | `onDemand` | Large datasets, hierarchical | Locations (state→district→village) |
 

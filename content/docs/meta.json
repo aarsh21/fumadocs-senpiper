@@ -1,6 +1,5 @@
 {
   "title": "Form Schema DSL",
-  "root": true,
   "pages": [
     "index",
     "overview",
@@ -9,8 +8,8 @@
     "reference",
     "schema",
     "evolution",
-    "development",
     "design",
+    "development",
     "test-schemas"
   ]
 }

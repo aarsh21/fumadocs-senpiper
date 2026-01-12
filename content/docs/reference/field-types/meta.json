@@ -3,18 +3,18 @@
   "pages": [
     "index",
     "textfield",
+    "number",
+    "string-list",
     "email",
     "phone",
-    "richtext",
-    "string-list",
-    "number",
-    "rating",
     "timestamp",
-    "multimedia",
     "location",
-    "qrcode",
+    "multimedia",
     "barcode",
-    "section",
-    "label"
+    "qrcode",
+    "rating",
+    "richtext",
+    "label",
+    "section"
   ]
 }

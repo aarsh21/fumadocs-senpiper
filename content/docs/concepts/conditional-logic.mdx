@@ -1,8 +1,7 @@
 ---
 title: "Conditional Logic (Predicates)"
-description: "What Are Predicates?"
+description: "Predicates are the heart of dynamic forms."
 ---
-
 
 ## What Are Predicates?
 
@@ -230,7 +229,7 @@ When the formula returns `null`, the field's value is **removed/cleared**. This 
 Options can come from three sources:
 1. **Enum List** - Static list defined in schema via `enum` property. See [Schema Properties - Enum](schema-properties.md#enum)
 2. **Offline Master** - Pre-synced master data stored locally. See [Master Data - Offline](master-data.md#offline-master)
-3. **Online Master** - Real-time API fetch. See [Master Data - Online](master-data.md#online-master) and [Master Data API Spec](../api/master-data-api)
+3. **Online Master** - Real-time API fetch. See [Master Data - Online](master-data.md#online-master) and [Master Data API Spec](../api/master-data-api.md)
 
 **Clearing Parent Values:**
 When a parent field's value is cleared:
@@ -317,7 +316,7 @@ When a parent field's value is cleared:
 
 **Access Matrix Levels in Schema:**
 The `accessMatrix` can be defined at multiple levels:
-1. **Field Level** - On individual [schema properties](schema-properties)
+1. **Field Level** - On individual [schema properties](schema-properties.md)
 2. **Section Level** - On section/object containers
 3. **Form Level** - Global defaults for the form
 
@@ -420,29 +419,156 @@ The `validatePredicateConfig` allows displaying validation results as popups:
 
 ---
 
-### ASYNC_CALC - Aggregation from Other Forms
+### ASYNC_CALC - Aggregation from Child Form Answers
 
-**Purpose:** Calculate aggregates (sum, count, average) from another form's answers.
+**Purpose:** Compute aggregate values from child form answers and populate them in parent form answer fields. This enables parent forms to automatically reflect computed summaries based on their linked child submissions.
 
-**When to use:** Dashboards, rollup calculations, cross-form totals.
+**When to use:** Roll-up calculations, parent-child form aggregations, automatic totals from linked submissions.
 
-> **📝 TODO:** Mihir to add detailed documentation for ASYNC_CALC including:
-> - Full API specification
-> - Filter condition syntax
-> - Error handling
-> - Performance considerations
+<Callout type="error">
+**Server-Side Only:** This predicate executes **asynchronously on the backend** when a child form answer is submitted or updated. It is NOT executed on the client. The parent answer is updated automatically after child submission.
+</Callout>
+
+#### How ASYNC_CALC Works
+
+ASYNC_CALC operates on a **parent-child form relationship**:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     CHILD FORM SUBMITTED                         │
+│                            │                                     │
+│                            ▼                                     │
+│        Backend receives child answer with                        │
+│        parentAnswerIdentifier pointing to parent                 │
+│                            │                                     │
+│                            ▼                                     │
+│        AsyncCalcListener triggered via message queue             │
+│                            │                                     │
+│                            ▼                                     │
+│        Fetch parent form schema and answer                       │
+│                            │                                     │
+│                            ▼                                     │
+│        Find fields with ASYNC_CALC predicates                    │
+│                            │                                     │
+│                            ▼                                     │
+│        For each ASYNC_CALC predicate:                            │
+│        1. Fetch all child answers linked to parent               │
+│        2. Filter by formSchemaIdentifier (if specified)          │
+│        3. Filter by filterCondition (if specified)               │
+│        4. Apply operation (SUM, COUNT, etc.) on key              │
+│        5. Update parent answer field with result                 │
+│                            │                                     │
+│                            ▼                                     │
+│        Save updated parent answer to database                    │
+│        Send notification for parent answer update                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Basic Example
+
+**Parent Form Schema (Project Summary):**
+```json
+{
+  "totalExpenses": {
+    "title": "Total Expenses",
+    "type": "number",
+    "predicates": [{
+      "action": "ASYNC_CALC",
+      "actionConfig": {
+        "key": "expenseAmount",
+        "operation": "SUM"
+      }
+    }]
+  },
+  "expenseCount": {
+    "title": "Number of Expenses",
+    "type": "number",
+    "predicates": [{
+      "action": "ASYNC_CALC",
+      "actionConfig": {
+        "key": "expenseAmount",
+        "operation": "COUNT"
+      }
+    }]
+  }
+}
+```
+
+When child expense forms are submitted with `parentAnswerIdentifier` pointing to this project, the `totalExpenses` field automatically sums all `expenseAmount` values from child answers.
+
+#### Action Config Properties
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `formSchemaIdentifier` | `object` | No | Filter to only aggregate from a specific child form schema. If not specified, aggregates from all child forms. |
+| `formSchemaIdentifier.groupId` | `UUID` | Yes* | Group ID of the child form (*required if `formSchemaIdentifier` is specified) |
+| `formSchemaIdentifier.formSchemaId` | `UUID` | Yes* | Form schema ID of the child form (*required if `formSchemaIdentifier` is specified) |
+| `filterCondition` | `string` | No | JavaScript expression to filter which child answers to include in aggregation. Child answer fields are available directly (e.g., `status == 'Approved'`). |
+| `key` | `string` | Yes | The field key in child answers to aggregate. Supports dot notation for nested fields (e.g., `section.amount`). |
+| `operation` | `string` | Yes | The aggregation operation to perform. See supported operations below. |
+| `sectionArraySumAggregationConfig` | `object` | No | Advanced configuration for `SECTION_ARRAY_SUM_AGGREGATION` operation. |
+
+#### Supported Operations
+
+| Operation | Description | Return Type | Example Use Case |
+|-----------|-------------|-------------|------------------|
+| `SUM` | Sum of all numeric values from the specified key | `number` | Total expenses, total quantity ordered |
+| `COUNT` | Count of all matching child answers | `number` | Number of submissions, task count |
+| `AVERAGE` | Arithmetic mean of numeric values | `number` | Average score, average time spent |
+| `MIN` | Minimum numeric value | `number` | Earliest date, lowest bid |
+| `MAX` | Maximum numeric value | `number` | Latest date, highest score |
+| `COPY` | Collects values into an array (excludes zero/empty values) | `array` | List of all comments, collection of attachments |
+| `SECTION_ARRAY_SUM_AGGREGATION` | Advanced aggregation for section arrays with primary key matching | `array` | Pivot-style aggregation across forms |
+
+#### Filtering Child Answers
+
+Use `filterCondition` to include only specific child answers in the aggregation:
 
 ```json
 {
-  "title": "Total Orders",
+  "predicates": [{
+    "action": "ASYNC_CALC",
+    "actionConfig": {
+      "key": "amount",
+      "operation": "SUM",
+      "filterCondition": "status == 'Approved' && amount > 0"
+    }
+  }]
+}
+```
+
+**Available variables in filterCondition:**
+- All fields from the child answer are available directly (e.g., `status`, `amount`, `category`)
+- `status` - The workflow status of the child answer (also available as `_$status`)
+
+**Example filter conditions:**
+```javascript
+// Only approved items
+"status == 'Approved'"
+
+// Only items above a threshold
+"amount > 1000"
+
+// Combine multiple conditions
+"status == 'Completed' && category == 'Electronics'"
+
+// Check for non-null values
+"reviewDate != null"
+```
+
+#### Targeting Specific Child Forms
+
+When a parent can have children from multiple form schemas, use `formSchemaIdentifier` to target a specific child form:
+
+```json
+{
   "predicates": [{
     "action": "ASYNC_CALC",
     "actionConfig": {
       "formSchemaIdentifier": {
-        "groupId": "...",
-        "formSchemaId": "orders-form-id"
+        "groupId": "550e8400-e29b-41d4-a716-446655440000",
+        "formSchemaId": "660e8400-e29b-41d4-a716-446655440001"
       },
-      "filterCondition": "this.customerId == formAnswer.customerId",
       "key": "amount",
       "operation": "SUM"
     }
@@ -450,12 +576,155 @@ The `validatePredicateConfig` allows displaying validation results as popups:
 }
 ```
 
-**Operations:**
-- `SUM` - Add up all values
-- `COUNT` - Count matching records
-- `AVERAGE` - Calculate mean
-- `MIN` - Find minimum
-- `MAX` - Find maximum
+If `formSchemaIdentifier` is not specified, the aggregation includes child answers from **all linked child forms**.
+
+#### Advanced: Section Array Sum Aggregation
+
+The `SECTION_ARRAY_SUM_AGGREGATION` operation enables pivot-style aggregation where:
+1. Child forms contain section arrays with rows identified by primary keys
+2. Parent form has a section array with matching primary keys
+3. Values from child rows are aggregated into matching parent rows
+
+```json
+{
+  "predicates": [{
+    "action": "ASYNC_CALC",
+    "actionConfig": {
+      "operation": "SECTION_ARRAY_SUM_AGGREGATION",
+      "sectionArraySumAggregationConfig": {
+        "sectionArrayFieldKey": "productSummary",
+        "rowPrimaryKeys": ["productId", "category"],
+        "aggregationKey": "totalQuantity",
+        "childConfigs": {
+          "child-form-uuid-1": {
+            "sectionArrayFieldKey": "orderItems",
+            "rowPrimaryKeys": ["productId", "category"],
+            "aggregationKey": "quantity"
+          }
+        }
+      }
+    }
+  }]
+}
+```
+
+**Config Properties:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `sectionArrayFieldKey` | `string` | Field key of the section array in parent/child form |
+| `rowPrimaryKeys` | `array` | List of field keys that uniquely identify a row |
+| `aggregationKey` | `string` | Field key whose values should be summed |
+| `childConfigs` | `object` | Map of child form UUIDs to their respective configs |
+
+#### Performance Considerations
+
+<Callout type="info">
+ASYNC_CALC runs asynchronously after child submission. There is a small delay (~1 second) before the parent answer is updated to ensure all database writes are complete.
+</Callout>
+
+- **Execution timing**: The listener waits briefly after child submission to ensure data consistency
+- **Cascading updates**: If a parent also has a parent (grandparent), the update cascades up the hierarchy
+- **Notification**: After parent update, notifications are sent to relevant users
+- **Re-calculation**: All ASYNC_CALC predicates on the parent are re-evaluated when any child is submitted
+
+#### Execution Control
+
+Since ASYNC_CALC is server-side only, you typically want to prevent client execution:
+
+```json
+{
+  "predicates": [{
+    "action": "ASYNC_CALC",
+    "skipPredicateExecutionOnClient": true,
+    "actionConfig": {
+      "key": "amount",
+      "operation": "SUM"
+    }
+  }]
+}
+```
+
+#### Complete Example: Project with Expense Tracking
+
+**Parent Form (Project):**
+```json
+{
+  "schema": {
+    "properties": {
+      "projectName": {
+        "title": "Project Name",
+        "type": "string"
+      },
+      "totalApprovedExpenses": {
+        "title": "Total Approved Expenses",
+        "type": "number",
+        "predicates": [{
+          "action": "ASYNC_CALC",
+          "skipPredicateExecutionOnClient": true,
+          "actionConfig": {
+            "key": "amount",
+            "operation": "SUM",
+            "filterCondition": "status == 'Approved'"
+          }
+        }]
+      },
+      "pendingExpenseCount": {
+        "title": "Pending Expenses",
+        "type": "number",
+        "predicates": [{
+          "action": "ASYNC_CALC",
+          "skipPredicateExecutionOnClient": true,
+          "actionConfig": {
+            "key": "amount",
+            "operation": "COUNT",
+            "filterCondition": "status == 'Pending'"
+          }
+        }]
+      },
+      "averageExpense": {
+        "title": "Average Expense Amount",
+        "type": "number",
+        "predicates": [{
+          "action": "ASYNC_CALC",
+          "skipPredicateExecutionOnClient": true,
+          "actionConfig": {
+            "key": "amount",
+            "operation": "AVERAGE"
+          }
+        }]
+      }
+    }
+  }
+}
+```
+
+**Child Form (Expense):**
+```json
+{
+  "schema": {
+    "properties": {
+      "description": {
+        "title": "Expense Description",
+        "type": "string"
+      },
+      "amount": {
+        "title": "Amount",
+        "type": "number"
+      },
+      "category": {
+        "title": "Category",
+        "type": "string"
+      }
+    }
+  }
+}
+```
+
+When expense forms are submitted with `parentAnswerIdentifier` linking to a project:
+- `totalApprovedExpenses` automatically sums amounts where status is "Approved"
+- `pendingExpenseCount` counts expenses where status is "Pending"
+- `averageExpense` calculates the mean of all expense amounts
 
 ---
 
@@ -499,6 +768,8 @@ The `validatePredicateConfig` allows displaying validation results as popups:
 
 **When to use:** Building up a list based on actions.
 
+> **Note:** This predicate is designed specifically for **array type fields**. The value appended to the array is the value returned by the `appendExpression`.
+
 ```json
 {
   "predicates": [{
@@ -538,27 +809,391 @@ The `validatePredicateConfig` allows displaying validation results as popups:
 
 ---
 
+### OBJECT_DETECTION - AI Object Detection
+
+**Purpose:** Detect and count specific objects within images using computer vision models.
+
+**When to use:** Validating presence of specific objects (screens, humans, equipment, buildings), attendance tracking, environment verification.
+
+<Callout type="info">
+This is an AI-powered validation predicate that makes asynchronous API calls to a computer vision service. The validation runs when the predicate is triggered, and form submission should be disabled while validation is in progress.
+</Callout>
+
+```json
+{
+  "predicates": [{
+    "action": "OBJECT_DETECTION",
+    "actionConfig": {
+      "errorMessage": "Required object not detected in image",
+      "successMessage": "Object detected successfully",
+      "validationEndpoint": "/detect/screen"
+    }
+  }]
+}
+```
+
+**Action Config Properties:**
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `validationEndpoint` | `string` | Yes | The AI service endpoint for detection (e.g., `/detect/screen`, `/detect/student`, `/detect/building-matching`) |
+| `errorMessage` | `string` | No | Message displayed when validation fails |
+| `successMessage` | `string` | No | Message displayed when validation succeeds |
+
+**Client-Side Implementation:**
+
+1. Image is uploaded to the field
+2. Predicate logic triggers on field change
+3. Client makes async POST request to: `/api/core/forms/answers/ai${validationEndpoint}`
+4. Submit button should be **disabled** while validation runs
+5. Display `errorMessage` or `successMessage` based on response
+
+**API Request Payload:**
+
+```json
+{
+  "image_url": "https://example.com/image.jpg",
+  "confidence": 0.7
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `image_url` | `string` | Yes | URL of the image to analyze |
+| `confidence` | `number` | No | Confidence threshold (0-1), default varies by endpoint |
+
+**API Response Handling:**
+
+The response contains a `detection_count` field indicating how many objects were detected.
+
+<Callout type="info">
+**📝 TODO - Future Enhancement:** The validation criteria (e.g., minimum detection count) is currently endpoint-specific and not configurable via the predicate. Consider adding a `validationCriteria` config object to make this more generic:
+```json
+"validationCriteria": {
+  "minDetectionCount": 1,
+  "maxDetectionCount": 100
+}
+```
+</Callout>
+
+**Example Use Cases:**
+
+| Use Case | Endpoint | Validation Criteria |
+|----------|----------|---------------------|
+| CCTV screen detection | `/detect/cctv-screen` | `detection_count >= 1` |
+| Dashboard detection | `/detect/aebas` | `detection_count >= 1` |
+| Student presence | `/detect/student` | `detection_count >= 3` |
+| Building matching | `/detect/building-matching` | Uses `is_match` flag |
+
+---
+
+### IMAGE_MATCHING - AI Image Comparison
+
+**Purpose:** Compare two images to verify if they depict the same subject (e.g., face verification, building matching).
+
+**When to use:** Identity verification, location verification, before/after comparisons.
+
+<Callout type="info">
+This is an AI-powered validation predicate that compares a captured image against a reference image. The comparison runs asynchronously and form submission should be disabled while validation is in progress.
+</Callout>
+
+```json
+{
+  "predicates": [{
+    "action": "IMAGE_MATCHING",
+    "actionConfig": {
+      "errorMessage": "Images do not match",
+      "successMessage": "Images matched successfully",
+      "validationEndpoint": "/detect/face/compare",
+      "field": "referencePhoto"
+    }
+  }]
+}
+```
+
+**Action Config Properties:**
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `validationEndpoint` | `string` | Yes | The AI service endpoint for comparison (e.g., `/detect/face/compare`) |
+| `field` | `string` | Yes | Field key containing the reference image to compare against |
+| `errorMessage` | `string` | No | Message displayed when images don't match |
+| `successMessage` | `string` | No | Message displayed when images match |
+
+**Client-Side Implementation:**
+
+1. Image is uploaded to the field
+2. Predicate logic triggers on field change
+3. Client retrieves reference image URL from the `field` specified in config
+4. Client makes async POST request to: `/api/core/forms/answers/ai${validationEndpoint}`
+5. Submit button should be **disabled** while validation runs
+6. Display `errorMessage` or `successMessage` based on `is_match` in response
+
+**API Request Payload:**
+
+```json
+{
+  "compare_image_url": "https://example.com/captured.jpg",
+  "reference_image_url": "https://example.com/reference.jpg",
+  "similarity_threshold": 0.6
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `compare_image_url` | `string` | Yes | URL of the image being validated |
+| `reference_image_url` | `string` | Yes | URL of the reference image to compare against |
+| `similarity_threshold` | `number` | No | Similarity threshold (0-1), default: 0.6 |
+
+**API Response Handling:**
+
+The response contains an `is_match` boolean field. Validation passes when `is_match` is `true`.
+
+<Callout type="info">
+**📝 TODO - Future Enhancement:** The validation logic currently relies on endpoint-specific response fields (`is_match`, `detection_count`). Consider standardizing the response format or adding configurable validation rules:
+```json
+"validationCriteria": {
+  "responseField": "is_match",
+  "expectedValue": true
+}
+```
+</Callout>
+
+---
+
 ### FACE_MATCH - Biometric Validation
 
 **Purpose:** Verify that captured photo matches a reference image.
 
 **When to use:** Identity verification, attendance systems.
 
+<Callout type="warn">
+**Platform Support:** This predicate is currently **only implemented in Android**. iOS and Web clients do not support this predicate.
+</Callout>
+
+<Callout type="info">
+**📝 TODO:** Documentation pending from:
+- **Solutioning Team:** Explain the behavior and solutioning approach for this predicate
+- **Tech Team:** Document how this field works, including:
+  - Dataset required for face matching
+  - APIs involved in the matching process
+</Callout>
+
+<Callout type="info">
+**Consider using `IMAGE_MATCHING`:** For new implementations, consider using the `IMAGE_MATCHING` action type with `/detect/face/compare` endpoint, which is supported on all platforms.
+</Callout>
+
 ---
 
-### CUSTOM_FUNCTION - Run Custom Code
+### CUSTOM_FUNCTION - Server-Computed Values
 
-**Purpose:** Execute custom JavaScript functions for complex logic.
+**Purpose:** Compute field values that require server-side processing, such as generating shortened URLs, converting addresses to geographic coordinates, or creating location-based hash codes.
 
-**When to use:** Logic that doesn't fit other action types.
+**When to use:** When you need field values that depend on external services or specialized computations that are processed during form submission.
+
+<Callout type="error">
+**Server-Side Only:** These predicates are processed on the backend when form data is submitted. Client applications do not execute this predicate type. The computed values will appear in the form data after server processing.
+</Callout>
+
+#### How Custom Functions Work
+
+Custom functions take input from one or more form fields and automatically populate output fields with computed values. This happens transparently during form processing—users fill in the source fields, and the system generates the derived values.
+
+**Example flow:**
+1. User enters a long URL in a form field
+2. Form is submitted to the server
+3. Server processes the CUSTOM_FUNCTION predicate
+4. A shortened URL is generated and stored in the target field
+5. The completed form data includes both the original and shortened URLs
+
+#### Conditional Execution
+
+Like other predicates, custom functions support the `condition` property at the root level. This allows you to control when the custom function executes based on form answer values.
+
+```json
+{
+  "action": "CUSTOM_FUNCTION",
+  "condition": "this.generateShortUrl == true",
+  "actionConfig": {
+    "customFunctionPredicateConfig": {
+      "urlShortenerConfig": { ... }
+    }
+  }
+}
+```
+
+When a `condition` is specified:
+- The condition expression is evaluated against the form answers
+- If the condition evaluates to `true`, the custom function executes
+- If the condition evaluates to `false`, the custom function is skipped
+- If no condition is specified, the custom function always executes when triggered
+
+This applies to all custom function types (URL Shortener, Address Geocoding, and GeoHash).
+
+#### Supported Function Types
+
+Custom functions support three specialized operations:
+
+---
+
+#### 1. URL Shortener
+
+Creates shortened URLs from long URLs, with configurable expiry and automatic secret key generation. Useful for generating shareable links that are easier to distribute.
+
+```json
+{
+  "action": "CUSTOM_FUNCTION",
+  "condition": "this.needsShortUrl == true",
+  "actionConfig": {
+    "customFunctionPredicateConfig": {
+      "urlShortenerConfig": {
+        "timeUnitForExpiry": "YEAR",
+        "timeDeltaForExpiry": 365,
+        "timezone": "IST",
+        "secretKeyLength": 8,
+        "sourceKey": "originalUrl"
+      }
+    }
+  }
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `sourceKey` | `string` | Field key containing the long URL to shorten (e.g., `"originalUrl"` refers to a field where user enters the full URL) |
+| `timeUnitForExpiry` | `string` | Unit of time for link expiry: `YEAR`, `MONTH`, `DAY`, `HOUR`, `MINUTE` |
+| `timeDeltaForExpiry` | `number` | Number of time units until the shortened URL expires |
+| `timezone` | `string` | Timezone for expiry calculation (e.g., `"IST"`, `"UTC"`) |
+| `secretKeyLength` | `number` | Length of the generated secret key appended to the short URL |
+
+---
+
+#### 2. Address Geocoding
+
+Converts a text address into geographic coordinates (latitude and longitude) using geocoding services. Useful for mapping addresses to locations on a map.
+
+```json
+{
+  "action": "CUSTOM_FUNCTION",
+  "condition": "this.customerAddress != null && this.customerAddress != ''",
+  "actionConfig": {
+    "customFunctionPredicateConfig": {
+      "addressGeocodingConfig": {
+        "geocodeQueryResolverType": "GOOGLE_MAPS",
+        "addressQueryFieldKey": "customerAddress",
+        "fetchAddress": false,
+        "fieldKeyToGeocodeProperty": {
+          "addressLatitude": "LATITUDE",
+          "addressLongitude": "LONGITUDE"
+        }
+      }
+    }
+  }
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `addressQueryFieldKey` | `string` | Field key containing the address text to geocode (e.g., `"customerAddress"` refers to a text field where user enters the address) |
+| `geocodeQueryResolverType` | `string` | Geocoding service provider: `GOOGLE_MAPS` |
+| `fetchAddress` | `boolean` | Set to `true` to perform reverse geocoding (coordinates → address) instead |
+| `fieldKeyToGeocodeProperty` | `object` | Maps output field keys to geocode properties. Keys are your field names (e.g., `"addressLatitude"`), values are `LATITUDE` or `LONGITUDE` |
+
+---
+
+#### 3. GeoHash Generation
+
+Generates a geohash string from latitude and longitude coordinates. Geohashes are compact codes that represent geographic locations, useful for geographic grouping, proximity searches, and location-based data organization.
+
+```json
+{
+  "action": "CUSTOM_FUNCTION",
+  "condition": "this.locationLat != null && this.locationLng != null",
+  "actionConfig": {
+    "customFunctionPredicateConfig": {
+      "geoHashPredicateConfig": {
+        "latitudeFieldKey": "locationLat",
+        "longitudeFieldKey": "locationLng",
+        "precision": 10
+      }
+    }
+  }
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `latitudeFieldKey` | `string` | Field key containing the latitude value (e.g., `"locationLat"` refers to a number field storing the latitude) |
+| `longitudeFieldKey` | `string` | Field key containing the longitude value (e.g., `"locationLng"` refers to a number field storing the longitude) |
+| `precision` | `number` | Geohash precision level from 1-12. Higher values = more precise location encoding. Precision 6 ≈ 1.2km accuracy, Precision 10 ≈ 1m accuracy |
 
 ---
 
 ### JSON_CALC - JSON Manipulation
 
-**Purpose:** Perform calculations on JSON structures.
+**Purpose:** Perform calculations on JSON structures and return complex data objects.
 
-**When to use:** Complex data transformations.
+**When to use:** Complex data transformations that need to return JSON objects or arrays.
+
+<Callout type="error">
+**Server-Side Only:** This is a **backend-only construct**. It must be solutioned in a way that returns a JSON string, with object serialization happening on the backend.
+</Callout>
+
+<Callout type="info">
+This predicate is designed specifically for **JSON objects**. Unlike regular `CALC` which returns primitive values, `JSON_CALC` can return complex structures like arrays and nested objects.
+</Callout>
+
+<Callout type="info">
+**📝 TODO - Future Consideration:** Evaluate whether `JSON_CALC` should be unified with `CALC`. Potential benefits of unification include simpler API surface and reduced cognitive load for schema authors. The distinction could instead be handled by the return type of the formula or a configuration flag.
+</Callout>
+
+**Example - Building a Dynamic Array:**
+
+```json
+{
+  "action": "JSON_CALC",
+  "actionConfig": {
+    "formula": "var section_array = []; if(this.node != undefined) { var row = { 'equi': 'Antenna', 'equip': this.a, 'ai': this.text, 'o': this.node.originalImage, 'aii': this.node.transformedImage }; section_array.push(row); } if(this.nodea != undefined) { var row = { 'equi': 'Backhaul', 'equip': this.aa, 'ai': this.texta, 'o': this.nodea.originalImage, 'aii': this.nodea.transformedImage }; section_array.push(row); } section_array;"
+  }
+}
+```
+
+**Formatted Formula Example:**
+
+```javascript
+var section_array = [];
+
+if (this.node != undefined) {
+  var row = {
+    'equi': 'Antenna',
+    'equip': this.a,
+    'ai': this.text,
+    'o': this.node.originalImage,
+    'aii': this.node.transformedImage
+  };
+  section_array.push(row);
+}
+
+if (this.nodea != undefined) {
+  var row = {
+    'equi': 'Backhaul',
+    'equip': this.aa,
+    'ai': this.texta,
+    'o': this.nodea.originalImage,
+    'aii': this.nodea.transformedImage
+  };
+  section_array.push(row);
+}
+
+// Return the array - last expression is the result
+section_array;
+```
+
+**Key Points:**
+- The formula is JavaScript code that runs on the server
+- The last expression in the formula is the returned value
+- Can build arrays dynamically by conditionally pushing objects
+- Useful for aggregating data from multiple fields into a structured format
 
 ---
 
@@ -625,10 +1260,15 @@ When `true`, this predicate only runs on the client. Useful for:
 
 ### 1. Always Define Both States
 
-For visibility predicates, handle both conditions:
+For visibility predicates, explicitly handling both conditions is recommended for clarity:
+
+<Callout type="info">
+**Actual Behavior:** When a predicate condition fails, the field's access matrix **reverts to the default state** defined in the schema's `accessMatrix`. This means the first example below will technically work—the field will revert to its schema default when `showExtra` becomes false. However, explicitly defining both states is still considered good practice for better readability and maintainability.
+</Callout>
 
 ```json
-// Bad - field stays in last state if condition becomes false
+// Works - field reverts to schema default when condition becomes false
+// But intent is not explicit
 {
   "predicates": [{
     "condition": "this.showExtra == true",
@@ -637,7 +1277,7 @@ For visibility predicates, handle both conditions:
   }]
 }
 
-// Good - explicitly handle both states
+// Better - explicitly handle both states for clarity
 {
   "predicates": [{
     "condition": "this.showExtra == true",
@@ -758,17 +1398,19 @@ The system usually has loop detection, but avoid circular dependencies in design
 | `APPLY_ACCESS_MATRIX` | Change visibility/access | `accessMatrix` |
 | `VALIDATE` | Show error | `errorMessage` |
 | `COPY` | Copy from field | `field` |
-| `ASYNC_CALC` | Aggregate from form | `formSchemaIdentifier`, `operation` |
+| `ASYNC_CALC` | Aggregate from child forms | `key`, `operation`, `filterCondition` |
 | `CONDITIONAL_FORMAT` | Change appearance | `conditionalFormats` |
 | `APPEND` | Add to array | `appendExpression` |
 | `GEO_FENCE` | Location validation | `geoFencePredicateConfig` |
+| `OBJECT_DETECTION` | AI object detection | `validationEndpoint` |
+| `IMAGE_MATCHING` | AI image comparison | `validationEndpoint`, `field` |
 
 ---
 
 ## Related Documentation
 
-- **[Schema Properties](schema-properties)** - Field definitions and access matrix details
-- **[Master Data](master-data)** - How OPTION_FILTER works with external data
-- **[Visibility & Access](visibility-access)** - Deep dive into access control
-- **[Recipes: Cascading Dropdowns](/docs/recipes/cascading-dropdown)** - Practical example
+- **[Schema Properties](schema-properties.md)** - Field definitions and access matrix details
+- **[Master Data](master-data.md)** - How OPTION_FILTER works with external data
+- **[Visibility & Access](visibility-access.md)** - Deep dive into access control
+- **[Recipes: Cascading Dropdowns](../recipes/cascading-dropdown.md)** - Practical example
 

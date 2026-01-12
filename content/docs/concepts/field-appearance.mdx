@@ -1,8 +1,7 @@
 ---
 title: "Field Appearance & Customization"
-description: "This document covers all schema properties that control how fields look and behave visually. These properties affect rendering, styling, layout, and u"
+description: "This document covers all schema properties that control how fields look and behave visually."
 ---
-
 
 This document covers all schema properties that control how fields look and behave visually. These properties affect rendering, styling, layout, and user interaction appearance.
 
@@ -44,26 +43,28 @@ Changes the visual representation of a field without changing its data type. Thi
 |------------|---------------|-------------|
 | **string_list** | `radio` | Radio buttons (single select) |
 | | `checkbox` | Checkboxes (multi-select) |
-| | `small_pill` / `smallPill` | Small pill/chip buttons |
-| | `large_pill` / `largePill` | Large pill/chip buttons |
+| | `small_pill` / `smallPill` | Small pill/chip buttons ⚠️ |
+| | `large_pill` / `largePill` | Large pill/chip buttons ⚠️ |
 | | *(default)* | Dropdown picker |
 | **section** | `newPage` | Renders section on a new screen |
 | | `accordian` | Collapsible accordion |
 | | `expandable` / `expanded` | Initially expanded |
 | | `collapsible` / `collapsed` | Initially collapsed |
-| | `inline` | Inline with parent |
-| | `book` | Book-style pagination |
-| | `tab` | Tab navigation |
-| | `table` | Table layout |
-| | `card` | Card style |
-| **label** | `h1` | Large heading |
-| | `h2` | Medium heading |
-| | `h3` | Small heading |
-| | `info` | Info style (blue) |
-| | `warn` | Warning style (yellow) |
-| | `error` | Error style (red) |
-| | `mediaOnly` | Display only media, no text |
+| | `table` | Table layout - used with section arrays; renders each section as a table row with titles as columns |
 | **number** | `counter` | Stepper/counter UI with +/- buttons |
+
+<Callout type="info">
+**Section Layout Notes:**
+- `inline` is **not** used with section type
+- `book` and `tab` are not currently implemented but reserved for future use
+- `card` layout has been removed (not supported)
+
+**Label Fields:**
+- Label fields do **not** support the `layout` property
+
+**Pill Layouts (⚠️):**
+- `small_pill`/`smallPill` and `large_pill`/`largePill` - verify deprecation status before use
+</Callout>
 
 **Example: Radio Layout**
 ```json
@@ -93,7 +94,7 @@ Changes the visual representation of a field without changing its data type. Thi
 
 ### `webLayout` 🖥️
 
-Web-specific layout override. Takes precedence over `layout` when rendering on web.
+Web-specific layout override. **On web, when `webLayout` is present, the web client reads only the `webLayout` property and completely ignores the `layout` property.**
 
 ```json
 {
@@ -178,6 +179,10 @@ Placeholder text shown inside empty input fields.
 
 Text displayed before the input (inside the field container).
 
+<Callout type="info">
+App and web teams should refer to visual guides for usage examples.
+</Callout>
+
 ```json
 {
   "price": {
@@ -192,6 +197,10 @@ Text displayed before the input (inside the field container).
 
 Text displayed after the input (inside the field container).
 
+<Callout type="info">
+App and web teams should refer to visual guides for usage examples.
+</Callout>
+
 ```json
 {
   "weight": {
@@ -204,7 +213,7 @@ Text displayed after the input (inside the field container).
 
 ### `wrapStyle` 🖥️
 
-Controls how text wraps within the field.
+Controls how text wraps within the field. **Web only: primarily used for viewing titles in tabular section layouts.**
 
 | Value | Description |
 |-------|-------------|
@@ -223,7 +232,7 @@ Controls how text wraps within the field.
 
 ### `renderAsMd` 🖥️
 
-When `true`, renders label text as Markdown.
+When `true`, renders text as Markdown. **Works on any field titles and label fields.**
 
 ```json
 {
@@ -356,6 +365,282 @@ All display configuration objects support these properties:
 | `padding` | `number` | Internal padding |
 | `margin` | `number` | External margin |
 
+### Complete FieldDisplayConfiguration Structure
+
+The `fillModeConfiguration` and `viewModeConfiguration` objects support a rich set of nested configuration objects for fine-grained control over field appearance:
+
+```typescript
+class FieldDisplayConfiguration {
+    hideMenuIcon?: boolean;
+    voiceInputEnabled?: boolean;
+    renderAsMd?: boolean;
+    displayOrientation?: DisplayOrientationConfiguration;
+    fieldContainerConfiguration?: ContainerConfiguration;
+    titleConfiguration?: ContainerConfiguration;
+    descriptionConfiguration?: ContainerConfiguration;
+    errorConfiguration?: ContainerConfiguration;
+    valueConfiguration?: ContainerConfiguration;
+    fieldSelectedConfiguration?: ContainerConfiguration;
+    fieldUnSelectedConfiguration?: ContainerConfiguration;
+    addAnotherButtonConfiguration?: ContainerConfiguration;
+}
+```
+
+#### FieldDisplayConfiguration Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `hideMenuIcon` | `boolean` | Show/hide the 3-dot menu icon in fields |
+| `voiceInputEnabled` | `boolean` | Show/hide the mic icon for voice input (text fields) |
+| `renderAsMd` | `boolean` | Render field content as Markdown |
+| `displayOrientation` | `DisplayOrientationConfiguration` | Controls title and value arrangement (side-by-side layouts) |
+| `fieldContainerConfiguration` | `ContainerConfiguration` | Layout UI for the entire field container |
+| `titleConfiguration` | `ContainerConfiguration` | Layout UI for the title/label container |
+| `descriptionConfiguration` | `ContainerConfiguration` | Layout UI for the description container |
+| `errorConfiguration` | `ContainerConfiguration` | Layout UI for the error message container |
+| `valueConfiguration` | `ContainerConfiguration` | Layout UI for the value/input container |
+| `fieldSelectedConfiguration` | `ContainerConfiguration` | Design for selected options (select/multiselect pills/checkboxes) |
+| `fieldUnSelectedConfiguration` | `ContainerConfiguration` | Design for unselected options (select/multiselect pills/checkboxes) |
+| `addAnotherButtonConfiguration` | `ContainerConfiguration` | Style for "Add Another" button in section arrays |
+
+#### DisplayOrientationConfiguration
+
+Controls how field titles and values are arranged, particularly for side-by-side layouts.
+
+```typescript
+class DisplayOrientationConfiguration {
+    layout?: string;
+    titleAndValueArrangement?: string;  // "default" or "sideBySide"
+    titleHorizontalPercentage?: number; // 0-100
+    spaceBetweenTitleAndValuePercentage?: number; // 0-100
+}
+```
+
+**Example: Side-by-Side Layout**
+```json
+{
+  "pincode": {
+    "title": "Pincode",
+    "type": "number",
+    "fillModeConfiguration": {
+      "displayOrientation": {
+        "titleAndValueArrangement": "sideBySide",
+        "titleHorizontalPercentage": 70,
+        "spaceBetweenTitleAndValuePercentage": 10
+      }
+    }
+  }
+}
+```
+
+#### ContainerConfiguration
+
+Defines the visual appearance of any container (field, title, value, etc.).
+
+```typescript
+class ContainerConfiguration {
+    backgroundConfiguration?: BackgroundConfiguration;
+    textConfiguration?: TextConfiguration;
+    spacing?: MarginConfiguration;
+}
+```
+
+#### BackgroundConfiguration
+
+```typescript
+class BackgroundConfiguration {
+    borderThickness?: number;
+    borderColor?: string;       // Hex code (e.g., "#EA4C89")
+    borderRadius?: CornerRadius;
+    color?: string;             // Background color hex code
+    shadow?: string;
+    imageName?: string;         // e.g., "field_background_9_patch"
+    imageUrl?: string;
+}
+```
+
+**Available Background Images:**
+- `field_background_9_patch`
+- `field_background_thicker_shadows_9_patch`
+
+#### TextConfiguration
+
+```typescript
+class TextConfiguration {
+    numberOfLines?: number;
+    textAlignment?: string;     // "center", "left", "right", "top", "bottom"
+    placeholderTextConfiguration?: TextConfiguration;
+    selectAllTextConfiguration?: TextConfiguration;
+    fontConfiguration?: FontConfiguration;
+    prefixConfiguration?: ContainerConfiguration;
+    suffixConfiguration?: ContainerConfiguration;
+}
+```
+
+#### FontConfiguration
+
+```typescript
+class FontConfiguration {
+    fontSize?: string;    // "extraSmall", "small", "medium", "large"
+    fontWeight?: string;  // "thin", "light", "regular", "medium", "black"
+    fontColor?: string;   // Hex code (e.g., "#EA4C89")
+    fontStyle?: string;   // "italic", "regular", "strikethrough", "underline"
+}
+```
+
+#### MarginConfiguration (Spacing)
+
+```typescript
+class MarginConfiguration {
+    left?: number;
+    top?: number;
+    bottom?: number;
+    right?: number;
+}
+```
+
+**Example: Spacing Configuration**
+```json
+{
+  "spacing": {
+    "left": 10,
+    "top": 10,
+    "bottom": 10,
+    "right": 10
+  }
+}
+```
+
+#### CornerRadius
+
+```typescript
+class CornerRadius {
+    radius?: number;           // Uniform radius for all corners
+    // OR specify individual corners:
+    topLeftRadius?: number;
+    topRightRadius?: number;
+    bottomLeftRadius?: number;
+    bottomRightRadius?: number;
+}
+```
+
+<Callout type="info">
+When using individual corner radii, you must specify **all four** values (topLeft, topRight, bottomLeft, bottomRight).
+</Callout>
+
+**Example: Uniform Radius**
+```json
+{
+  "borderRadius": {
+    "radius": 5
+  }
+}
+```
+
+**Example: Individual Corner Radii**
+```json
+{
+  "borderRadius": {
+    "topLeftRadius": 10,
+    "topRightRadius": 10,
+    "bottomLeftRadius": 0,
+    "bottomRightRadius": 0
+  }
+}
+```
+
+### Complete Configuration Example
+
+Here's a comprehensive example showing multiple configuration objects in action:
+
+```json
+{
+  "pincode": {
+    "title": "Pincode",
+    "type": "number",
+    "description": "number",
+    "fillModeConfiguration": {
+      "hideMenuIcon": true,
+      "voiceInputEnabled": false,
+      "displayOrientation": {
+        "titleAndValueArrangement": "sideBySide",
+        "titleHorizontalPercentage": 70,
+        "spaceBetweenTitleAndValuePercentage": 10
+      },
+      "fieldContainerConfiguration": {
+        "backgroundConfiguration": {
+          "borderRadius": { "radius": 5 },
+          "color": "#FFFFFF"
+        },
+        "spacing": {
+          "left": 10,
+          "top": 10,
+          "bottom": 10,
+          "right": 3
+        }
+      },
+      "titleConfiguration": {
+        "backgroundConfiguration": {
+          "color": "#FFFFFF"
+        },
+        "textConfiguration": {
+          "fontConfiguration": {
+            "fontSize": "small",
+            "fontWeight": "regular",
+            "fontColor": "#1b1b1b",
+            "fontStyle": "italic"
+          }
+        },
+        "spacing": {
+          "left": 10,
+          "top": 10,
+          "bottom": 10,
+          "right": 10
+        }
+      },
+      "valueConfiguration": {
+        "backgroundConfiguration": {
+          "borderThickness": 0,
+          "borderColor": "#FFFFFF",
+          "borderRadius": { "radius": 5 },
+          "color": "#FFFFFF"
+        },
+        "textConfiguration": {
+          "fontConfiguration": {
+            "fontSize": "regular",
+            "fontWeight": "regular",
+            "fontColor": "#404b69",
+            "fontStyle": "normal"
+          }
+        },
+        "spacing": {
+          "left": 10,
+          "top": 0,
+          "bottom": 15,
+          "right": 10
+        }
+      },
+      "errorConfiguration": {
+        "backgroundConfiguration": {
+          "borderThickness": 5,
+          "borderColor": "#00FFAA",
+          "borderRadius": { "radius": 5 },
+          "color": "#FFFFFF"
+        },
+        "textConfiguration": {
+          "fontConfiguration": {
+            "fontSize": "medium",
+            "fontWeight": "regular",
+            "fontColor": "#AAFF00",
+            "fontStyle": "bold_italic"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
 ---
 
 ## Visibility & Access
@@ -384,11 +669,19 @@ Controls field visibility, editability, and requirements.
 | `viewModeVisibility` | `string` | `VISIBLE`, `INVISIBLE`, `GONE` | Visibility in view mode |
 | `mandatory` | `boolean` | `true/false` | Field is required |
 | `readOnly` | `boolean` | `true/false` | Field cannot be edited |
-| `roles` | `string[]` | Role names | Which roles can see this field |
-| `cdr` | `string[]` | CDR names | Company Defined Roles access |
-| `userIds` | `UUID[]` | User IDs | Specific users access |
+| `roles` | `string[]` | Role names | Which roles can see this field ⚠️ |
+| `cdr` | `string[]` | CDR names | Company Defined Roles access ⚠️ |
+| `userIds` | `UUID[]` | User IDs | Specific users access ⚠️ |
 | `answer` | `any` | Default value | Pre-filled default value |
-| `userProfileDriven` | `boolean` | `true/false` | Auto-fill from user profile |
+| `userProfileDriven` | `boolean` | `true/false` | Auto-fill from user profile 📝 |
+
+<Callout type="info">
+**Access Control Properties (⚠️):**
+The `roles`, `cdr`, and `userIds` properties are used **only** for workflow button accessMatrix objects, **not** for form field schema.
+
+**userProfileDriven (📝):**
+This property is currently used directly in the form schema itself (not nested in accessMatrix). In future versions, this should be part of the accessMatrix object.
+</Callout>
 
 #### Visibility Values
 
@@ -396,7 +689,7 @@ Controls field visibility, editability, and requirements.
 |-------|-------------|
 | `VISIBLE` | Field is shown normally |
 | `INVISIBLE` | Field is hidden but takes space (for layout) |
-| `GONE` | Field is completely removed from layout |
+| `GONE` | Field is completely removed from layout. **Note:** Fields with GONE visibility do not contribute to answers submitted or drafted on server and client. |
 
 **Example: Role-Based Visibility**
 ```json
@@ -425,7 +718,7 @@ Controls field visibility, editability, and requirements.
 | `keysForRowHeader` | `string[]` | Fields to show in row header |
 | `minRows` | `number` | Minimum required rows |
 | `maxRows` | `number` | Maximum allowed rows |
-| `immutableRowCount` | `boolean` | Prevent adding/removing rows |
+| `immutableRowCount` | `boolean` | Prevent adding/removing rows (web only for now) |
 
 ```json
 {
@@ -748,8 +1041,8 @@ Using VALIDATE predicate with custom error display:
 
 ## See Also
 
-- [Field Types Reference](/docs/reference/field-types/README) - Complete field type documentation
-- [Conditional Logic](conditional-logic) - CONDITIONAL_FORMAT and other predicates
-- [Visibility & Access](visibility-access) - AccessMatrix deep dive
-- [Localization](localization) - Multi-language support
+- [Field Types Reference](../reference/field-types/README.md) - Complete field type documentation
+- [Conditional Logic](conditional-logic.md) - CONDITIONAL_FORMAT and other predicates
+- [Visibility & Access](visibility-access.md) - AccessMatrix deep dive
+- [Localization](localization.md) - Multi-language support
 

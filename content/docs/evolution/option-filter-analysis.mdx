@@ -3,7 +3,6 @@ title: "OPTION_FILTER Deep Analysis"
 description: "This document analyzes the current OPTION_FILTER implementation, identifies problems, and proposes ideal behavior."
 ---
 
-
 This document analyzes the current OPTION_FILTER implementation, identifies problems, and proposes ideal behavior.
 
 ---
@@ -423,7 +422,7 @@ Filter completes
 Enable District dropdown
          │
          ▼
-Show "N districts available"
+Show "{N} districts available"
 ```
 
 ---
@@ -546,7 +545,7 @@ Show "N districts available"
 |-------|-----|
 | Parent empty | Disabled + hint |
 | Loading | Spinner + "Loading..." |
-| Options ready | Enabled + "N options" |
+| Options ready | Enabled + "\{N} options" |
 | No match | Disabled + error message |
 | Invalid value | Warning icon + "Value no longer valid" |
 

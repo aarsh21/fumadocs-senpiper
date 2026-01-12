@@ -3,7 +3,6 @@ title: "Current Schema Limitations"
 description: "This document identifies architectural limitations in the current Form Schema that impact scalability, maintainability, and feature expansion."
 ---
 
-
 This document identifies architectural limitations in the current Form Schema that impact scalability, maintainability, and feature expansion.
 
 ---
@@ -578,7 +577,7 @@ Form with 4 location fields (same master)
 
 ### Ideal Solution
 
-See [Master Data Strategy](/docs/master-data-strategy) for complete solution:
+See [Master Data Strategy](./master-data-strategy.md) for complete solution:
 - Centralized master registry
 - Single fetch per master
 - Partitioning by key column
@@ -613,7 +612,7 @@ OPTION_FILTER has no defined behavior for edge cases:
 
 ### Ideal Solution
 
-See [OPTION_FILTER Deep Analysis](/docs/option-filter-analysis) for:
+See [OPTION_FILTER Deep Analysis](./option-filter-analysis.md) for:
 - `onParentChange: "clear" | "keep" | "validate"`
 - `emptyParentBehavior: "disable" | "showAll" | "showNone"`
 - Loading states
@@ -802,5 +801,5 @@ When converting V1 to V2:
 
 ## Next Steps
 
-See [Proposed Schema V2](/docs/proposed-schema-v2) for a redesigned schema addressing these limitations.
+See [Proposed Schema V2](./proposed-schema-v2.md) for a redesigned schema addressing these limitations.
 

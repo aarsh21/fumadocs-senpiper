@@ -9,6 +9,21 @@ export const source = loader({
   plugins: [lucideIconsPlugin()],
 });
 
+/**
+ * Generate a URL map of all documentation pages for AI context.
+ * Returns a formatted string listing all pages with their titles and URLs.
+ */
+export function getDocumentationUrlMap(): string {
+  const pages = source.getPages();
+  
+  const entries = pages.map((page) => {
+    const url = `/docs/${page.slugs.join('/')}`;
+    return `- ${page.data.title}: ${url}`;
+  });
+
+  return entries.join('\n');
+}
+
 export function getPageImage(page: InferPageType<typeof source>) {
   const segments = [...page.slugs, 'image.png'];
 

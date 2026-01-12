@@ -1,7 +1,4 @@
 {
   "title": "Reference",
-  "pages": [
-    "schema-properties",
-    "field-types"
-  ]
+  "pages": ["schema-properties", "field-types"]
 }

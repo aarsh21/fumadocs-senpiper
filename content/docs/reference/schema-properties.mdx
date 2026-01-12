@@ -1,8 +1,7 @@
 ---
 title: "Schema Properties Reference"
-description: "Complete Reference** for all SchemaProperty properties in the Form Schema DSL.  "
+description: "This document is organized into: 1."
 ---
-
 
 > **Complete Reference** for all SchemaProperty properties in the Form Schema DSL.  
 > Last updated from `SchemaProperty.java` - 130+ properties documented.
@@ -22,85 +21,85 @@ Quick alphabetical lookup of all properties with links and categories.
 
 | Property | Category | Type | See Also |
 |----------|----------|------|----------|
-| [`accessMatrix`](#accessmatrix) | Access Control | AccessMatrix | [Visibility & Access](concepts/visibility-access) |
-| [`allowBypassOfMasterListPopulation`](#allowbypassofmasterlistpopulation) | Master Data | boolean | [Master Data](concepts/master-data) |
+| [`accessMatrix`](#accessmatrix) | Access Control | AccessMatrix | [Visibility & Access](concepts/visibility-access.md) |
+| [`allowBypassOfMasterListPopulation`](#allowbypassofmasterlistpopulation) | Master Data | boolean | [Master Data](concepts/master-data.md) |
 | [`allowPagination`](#allowpagination) | Section/Array | boolean | |
 | [`allowWildcardSelect`](#allowwildcardselect) | Selection | boolean | |
-| [`autoGenerate`](#autogenerate) | Auto-Generation | boolean | [Auto-Generated IDs](recipes/auto-generated-ids) |
-| [`autoGenerateConfig`](#autogenerateconfig) | Auto-Generation | object | [Auto-Generated IDs](recipes/auto-generated-ids) |
+| [`autoGenerate`](#autogenerate) | Auto-Generation | boolean | [Auto-Generated IDs](recipes/auto-generated-ids.md) |
+| [`autoGenerateConfig`](#autogenerateconfig) | Auto-Generation | object | [Auto-Generated IDs](recipes/auto-generated-ids.md) |
 | [`autoPopulateDependentKeys`](#autopopulatedependentkeys) | Master Data | boolean | |
 | [`bypassValidationIfInvalid`](#bypassvalidationifinvalid) | Validation | boolean | |
-| [`cameraHint`](#camerahint) | Appearance | string | [Field Appearance](concepts/field-appearance) |
+| [`cameraHint`](#camerahint) | Appearance | string | [Field Appearance](concepts/field-appearance.md) |
 | [`captureIpAddress`](#captureipaddress) | System | boolean | |
 | [`caseIdentifierKey`](#caseidentifierkey) | Identity | string | |
 | [`clonedFieldKey`](#clonedfieldkey) | Identity | string | |
-| [`columnKey`](#columnkey) | Master Data | string | [Master Data](concepts/master-data) |
-| [`columnName`](#columnname) | Master Data | string | [Master Data](concepts/master-data) |
+| [`columnKey`](#columnkey) | Master Data | string | [Master Data](concepts/master-data.md) |
+| [`columnName`](#columnname) | Master Data | string | [Master Data](concepts/master-data.md) |
 | [`comparatorType`](#comparatortype) | Validation | Operator | |
 | [`companyMasterId`](#companymasterid) | User Profile | UUID | |
 | [`customWebFormLayouts`](#customwebformlayouts) | Web | object[] | |
 | [`dateOnly`](#dateonly) | DateTime | boolean | |
 | [`defaultExpandedCount`](#defaultexpandedcount) | Section/Array | integer | |
-| [`dependentKeys`](#dependentkeys) | Conditional Logic | string[] | [Conditional Logic](concepts/conditional-logic) |
+| [`dependentKeys`](#dependentkeys) | Conditional Logic | string[] | [Conditional Logic](concepts/conditional-logic.md) |
 | [`dependentResponseConfigurations`](#dependentresponseconfigurations) | Conditional Logic | Map | |
-| [`description`](#description) | Identity | string | [Field Types](concepts/field-types) |
+| [`description`](#description) | Identity | string | [Field Types](concepts/field-types.md) |
 | [`disableAccessMatrixInBulkUpload`](#disableaccessmatrixinbulkupload) | Bulk Upload | boolean | |
 | [`disableFilepicker`](#disablefilepicker) | Multimedia | boolean | |
 | [`disableManualEntry`](#disablemanualentry) | Selection | boolean | |
 | [`disableMasterDataForGroupMembershipSetting`](#disablemasterdataforgroupmembershipsetting) | Group Member | boolean | |
-| [`disableOfflineMaster`](#disableofflinemaster) | Master Data | boolean | [Master Data](concepts/master-data) |
+| [`disableOfflineMaster`](#disableofflinemaster) | Master Data | boolean | [Master Data](concepts/master-data.md) |
 | [`editable`](#editable) | Location | boolean | |
 | [`embedImageMetadata`](#embedimagemetadata) | Multimedia | boolean | |
 | [`enableClientSideValidateButton`](#enableclientsidevalidatebutton) | Validation | boolean | |
 | [`enableEventScheduling`](#enableeventscheduling) | DateTime | boolean | |
 | [`enableGeoTagging`](#enablegeotagging) | Multimedia | boolean | |
-| [`enableOfflineOptionFilterMaster`](#enableofflineoptionfiltermaster) | Master Data | boolean | [Master Data](concepts/master-data) |
-| [`enableOnlineMaster`](#enableonlinemaster) | Master Data | boolean | [Master Data](concepts/master-data) |
-| [`enableOnlineSearchableMaster`](#enableonlinesearchablemaster) | Master Data | boolean | [Master Data](concepts/master-data) |
+| [`enableOfflineOptionFilterMaster`](#enableofflineoptionfiltermaster) | Master Data | boolean | [Master Data](concepts/master-data.md) |
+| [`enableOnlineMaster`](#enableonlinemaster) | Master Data | boolean | [Master Data](concepts/master-data.md) |
+| [`enableOnlineSearchableMaster`](#enableonlinesearchablemaster) | Master Data | boolean | [Master Data](concepts/master-data.md) |
 | [`enableViewModeWebLayout`](#enableviewmodeweblayout) | Web | boolean | |
 | [`enableWebLayout`](#enableweblayout) | Web | boolean | |
 | [`enforceCameraFlash`](#enforcecameraflash) | Multimedia | boolean | |
 | [`enum`](#enum) | Selection | string[] | |
-| [`enumListLocalisationMap`](#enumlistlocalisationmap) | Localization | Map | [Localization](concepts/localization) |
+| [`enumListLocalisationMap`](#enumlistlocalisationmap) | Localization | Map | [Localization](concepts/localization.md) |
 | [`excludedFieldsForCopiedRow`](#excludedfieldsforcopiedrow) | Section/Array | string[] | |
 | [`externalEntityVerificationConfigs`](#externalentityverificationconfigs) | External | object[] | |
 | [`externalMasterDetail`](#externalmasterdetail) | Master Data | object | |
-| [`fillModeConfiguration`](#fillmodeconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance) |
+| [`fillModeConfiguration`](#fillmodeconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance.md) |
 | [`filterOnConditionPojo`](#filteronconditionpojo) | Master Data | boolean | |
-| [`filterString`](#filterstring) | Master Data | string | [Master Data](concepts/master-data) |
+| [`filterString`](#filterstring) | Master Data | string | [Master Data](concepts/master-data.md) |
 | [`filterStringCondition`](#filterstringcondition) | Master Data | ConditionPojo | |
 | [`filterStringConditionJson`](#filterstringconditionjson) | Master Data | string | |
 | [`filterStringConditionTreeFormat`](#filterstringconditiontreeformat) | Master Data | string | |
 | [`filterStringExpression`](#filterstringexpression) | Master Data | string | |
 | [`fontCase`](#fontcase) | Master Data | string | |
-| [`format`](#format) | Display | string | [Field Appearance](concepts/field-appearance) |
-| [`formDisplayConfiguration`](#formdisplayconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance) |
-| [`formulaKeys`](#formulakeys) | Conditional Logic | string[] | [Conditional Logic](concepts/conditional-logic) |
+| [`format`](#format) | Display | string | [Field Appearance](concepts/field-appearance.md) |
+| [`formDisplayConfiguration`](#formdisplayconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance.md) |
+| [`formulaKeys`](#formulakeys) | Conditional Logic | string[] | [Conditional Logic](concepts/conditional-logic.md) |
 | [`formReportConfiguration`](#formreportconfiguration) | Reports | object | |
 | [`generateSystemTimeAtServer`](#generatesystemtimeatserver) | DateTime | boolean | |
 | [`geocodeDataMapping`](#geocodedatamapping) | Location | Map | |
-| [`groupId`](#groupid) | Master Data | UUID | [Master Data](concepts/master-data) |
+| [`groupId`](#groupid) | Master Data | UUID | [Master Data](concepts/master-data.md) |
 | [`hideAddNewRowButton`](#hideaddnewrowbutton) | Section/Array | boolean | |
 | [`hideSearchIcon`](#hidesearchicon) | Selection | boolean | |
 | [`hideSyncMasterStrip`](#hidesyncmasterstrip) | Web | boolean | |
-| [`hint`](#hint) | Appearance | string | [Field Appearance](concepts/field-appearance) |
+| [`hint`](#hint) | Appearance | string | [Field Appearance](concepts/field-appearance.md) |
 | [`hypervergeIntegrationConfig`](#hypervergeintegrationconfig) | External | object | |
 | [`imageObjectDetectionConfigs`](#imageobjectdetectionconfigs) | Object Detection | object[] | |
 | [`immutableRowCount`](#immutablerowcount) | Section/Array | boolean | |
-| [`inlineHint`](#inlinehint) | Appearance | boolean | [Field Appearance](concepts/field-appearance) |
+| [`inlineHint`](#inlinehint) | Appearance | boolean | [Field Appearance](concepts/field-appearance.md) |
 | [`items`](#items) | Structure | SchemaProperty | |
 | [`keysForRowHeader`](#keysforrowheader) | Section/Array | string[] | |
-| [`layout`](#layout) | Appearance | string | [Field Appearance](concepts/field-appearance) |
-| [`localisationMap`](#localisationmap) | Localization | Map | [Localization](concepts/localization) |
+| [`layout`](#layout) | Appearance | string | [Field Appearance](concepts/field-appearance.md) |
+| [`localisationMap`](#localisationmap) | Localization | Map | [Localization](concepts/localization.md) |
 | [`locationFieldConfig`](#locationfieldconfig) | Location | object | |
 | [`locationMandatory`](#locationmandatory) | Location | boolean | |
 | [`masterCombinationKeys`](#mastercombinationkeys) | Master Data | string[] | |
 | [`masterConfiguration`](#masterconfiguration) | Master Data | object | |
 | [`masterFilterConfig`](#masterfilterconfig) | Master Data | Map | |
-| [`masterId`](#masterid) | Master Data | UUID | [Master Data](concepts/master-data) |
-| [`masterName`](#mastername) | Master Data | string | [Master Data](concepts/master-data) |
-| [`masterPreviewFields`](#masterpreviewfields) | Master Data | string[] | [Master Data](concepts/master-data) |
-| [`masterType`](#mastertype) | Master Data | string | [Master Data](concepts/master-data) |
+| [`masterId`](#masterid) | Master Data | UUID | [Master Data](concepts/master-data.md) |
+| [`masterName`](#mastername) | Master Data | string | [Master Data](concepts/master-data.md) |
+| [`masterPreviewFields`](#masterpreviewfields) | Master Data | string[] | [Master Data](concepts/master-data.md) |
+| [`masterType`](#mastertype) | Master Data | string | [Master Data](concepts/master-data.md) |
 | [`maximum`](#maximum) | Validation | number | |
 | [`maxRows`](#maxrows) | Validation | integer | |
 | [`maxSize`](#maxsize) | Validation | integer | |
@@ -120,23 +119,23 @@ Quick alphabetical lookup of all properties with links and categories.
 | [`pattern`](#pattern) | Validation | string | |
 | [`period`](#period) | DateTime | string | |
 | [`pickManually`](#pickmanually) | Location | boolean | |
-| [`placeholder`](#placeholder) | Appearance | string | [Field Appearance](concepts/field-appearance) |
+| [`placeholder`](#placeholder) | Appearance | string | [Field Appearance](concepts/field-appearance.md) |
 | [`populateMasterDataInServer`](#populatemasterdatainserver) | Master Data | boolean | |
-| [`predicates`](#predicates) | Conditional Logic | Predicate[] | [Conditional Logic](concepts/conditional-logic) |
+| [`predicates`](#predicates) | Conditional Logic | Predicate[] | [Conditional Logic](concepts/conditional-logic.md) |
 | [`prefilledDataMappingKey`](#prefilleddatamappingkey) | Master Data | string | |
-| [`prefixText`](#prefixtext) | Appearance | string | [Field Appearance](concepts/field-appearance) |
+| [`prefixText`](#prefixtext) | Appearance | string | [Field Appearance](concepts/field-appearance.md) |
 | [`previewFields`](#previewfields) | Display | string[] | |
 | [`primaryKeys`](#primarykeys) | Identity | string[] | |
 | [`properties`](#properties) | Structure | Map | |
 | [`qrConfig`](#qrconfig) | QR/Barcode | object | |
 | [`remoteValidation`](#remotevalidation) | Validation | boolean | |
 | [`remoteValidations`](#remotevalidations) | Validation | object[] | |
-| [`renderAsMd`](#renderasmd) | Appearance | boolean | [Field Appearance](concepts/field-appearance) |
+| [`renderAsMd`](#renderasmd) | Appearance | boolean | [Field Appearance](concepts/field-appearance.md) |
 | [`required`](#required) | Structure | string[] | |
-| [`rowHeaderDisplayConfiguration`](#rowheaderdisplayconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance) |
+| [`rowHeaderDisplayConfiguration`](#rowheaderdisplayconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance.md) |
 | [`scanDisplayValueForBarCode`](#scandisplayvalueforbarcode) | QR/Barcode | boolean | |
 | [`scoringConfigs`](#scoringconfigs) | Scoring | Map | |
-| [`searchableKeys`](#searchablekeys) | Master Data | string[] | [Master Data](concepts/master-data) |
+| [`searchableKeys`](#searchablekeys) | Master Data | string[] | [Master Data](concepts/master-data.md) |
 | [`searchQueryConfiguration`](#searchqueryconfiguration) | Search | object | |
 | [`sectionArrayConfiguration`](#sectionarrayconfiguration) | Section/Array | object | |
 | [`selectAllButtonText`](#selectallbuttontext) | Selection | string | |
@@ -147,23 +146,23 @@ Quick alphabetical lookup of all properties with links and categories.
 | [`sortConfig`](#sortconfig) | Display | object | |
 | [`sortOptions`](#sortoptions) | Selection | boolean | |
 | [`sqlTitle`](#sqltitle) | Database | string | |
-| [`suffixText`](#suffixtext) | Appearance | string | [Field Appearance](concepts/field-appearance) |
+| [`suffixText`](#suffixtext) | Appearance | string | [Field Appearance](concepts/field-appearance.md) |
 | [`systemTime`](#systemtime) | DateTime | boolean | |
 | [`timeDelta`](#timedelta) | DateTime | integer | |
 | [`timeOnly`](#timeonly) | DateTime | boolean | |
 | [`timeUnit`](#timeunit) | DateTime | string | |
 | [`title`](#title) | Identity | string | |
-| [`titleDisplayConfiguration`](#titledisplayconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance) |
-| [`type`](#type) | Identity | string | [Field Types](concepts/field-types) |
+| [`titleDisplayConfiguration`](#titledisplayconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance.md) |
+| [`type`](#type) | Identity | string | [Field Types](concepts/field-types.md) |
 | [`uri`](#uri) | External | string | |
 | [`useLastValue`](#uselastvalue) | Section/Array | boolean | |
 | [`userProfileDriven`](#userprofiledriven) | User Profile | boolean | |
 | [`userProfileKey`](#userprofilekey) | User Profile | string | |
 | [`validateAgainstMasters`](#validateagainstmasters) | Master Data | boolean | |
 | [`validationMessage`](#validationmessage) | Validation | string | |
-| [`viewModeConfiguration`](#viewmodeconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance) |
-| [`webLayout`](#weblayout) | Appearance | string | [Field Appearance](concepts/field-appearance) |
-| [`wrapStyle`](#wrapstyle) | Appearance | string | [Field Appearance](concepts/field-appearance) |
+| [`viewModeConfiguration`](#viewmodeconfiguration) | Appearance | FieldDisplayConfiguration | [Field Appearance](concepts/field-appearance.md) |
+| [`webLayout`](#weblayout) | Appearance | string | [Field Appearance](concepts/field-appearance.md) |
+| [`wrapStyle`](#wrapstyle) | Appearance | string | [Field Appearance](concepts/field-appearance.md) |
 
 ---
 
@@ -192,7 +191,7 @@ The human-readable label displayed to users.
 **Category:** Identity  
 **Allowed Values:** `"string"`, `"number"`, `"boolean"`, `"object"`, `"array"`
 
-The data type determining how the value is stored. See [Field Types](concepts/field-types).
+The data type determining how the value is stored. See [Field Types](concepts/field-types.md).
 
 | Value | Storage | Example Answer |
 |-------|---------|----------------|
@@ -214,7 +213,7 @@ The data type determining how the value is stored. See [Field Types](concepts/fi
 **Category:** Identity  
 **Allowed Values:** `textfield`, `email`, `qrcode`, `barcode`, `number`, `phone`, `label`, `location`, `progress`, `rating`, `network`, `group_member`, `string_list`, `poll`, `debit`, `multimedia`, `section`, `form`, `richtext`, `timestamp`, `time`, `date`, `duration`, `business_card`, `report`, `checklist`, `geofence`, `separated_input`, `object_detection`, `object_dimension`, `text_extraction`
 
-The UI component type to render. See [Field Types Reference](field-types/README).
+The UI component type to render. See [Field Types Reference](field-types/README.md).
 
 **Common categories:**
 - **Text:** `textfield`, `email`, `phone`, `richtext`
@@ -237,7 +236,7 @@ The UI component type to render. See [Field Types Reference](field-types/README)
 **Type:** `string`  
 **Required:** No  
 **Category:** Appearance  
-**Related:** [Field Appearance](concepts/field-appearance)
+**Related:** [Field Appearance](concepts/field-appearance.md)
 
 Help text displayed near the field to guide users. Shown as tooltip or inline based on `inlineHint`.
 
@@ -281,7 +280,7 @@ Placeholder text shown inside empty input fields.
 **Type:** `string`  
 **Required:** No  
 **Category:** Appearance  
-**Related:** [Field Appearance](concepts/field-appearance)
+**Related:** [Field Appearance](concepts/field-appearance.md)
 
 Visual variant of the field component. Available values depend on field type:
 
@@ -541,7 +540,7 @@ List of required child field keys (JSON Schema compatibility). Prefer using `acc
 **Type:** `AccessMatrix`  
 **Required:** No  
 **Category:** Access Control  
-**Related:** [Visibility & Access](concepts/visibility-access)
+**Related:** [Visibility & Access](concepts/visibility-access.md)
 
 Field-level access control for visibility, editability, and requirements.
 
@@ -567,7 +566,7 @@ See [AccessMatrix Object](#accessmatrix-object) for all properties.
 **Type:** `Predicate[]`  
 **Required:** No  
 **Category:** Conditional Logic  
-**Related:** [Conditional Logic](concepts/conditional-logic)
+**Related:** [Conditional Logic](concepts/conditional-logic.md)
 
 Conditional rules that control field behavior dynamically.
 
@@ -594,7 +593,7 @@ See [Predicate Object](#predicate-object) for all properties.
 **Type:** `string[]`  
 **Required:** No  
 **Category:** Conditional Logic  
-**Related:** [Conditional Logic](concepts/conditional-logic)
+**Related:** [Conditional Logic](concepts/conditional-logic.md)
 
 Fields that should re-evaluate their predicates when this field changes. Essential for cascade behavior.
 
@@ -613,7 +612,7 @@ When State changes → predicates on District, City, and FullAddress are re-eval
 **Type:** `string[]`  
 **Required:** No  
 **Category:** Conditional Logic  
-**Related:** [Calculated Fields](recipes/calculated-field)
+**Related:** [Calculated Fields](recipes/calculated-field.md)
 
 Fields used in this field's CALC formula. Declares dependencies for calculation triggering.
 
@@ -801,7 +800,7 @@ Sort enum options alphabetically.
 
 ## Master Data
 
-Properties for connecting fields to external data sources. See [Master Data](concepts/master-data).
+Properties for connecting fields to external data sources. See [Master Data](concepts/master-data.md).
 
 ### masterId
 **Type:** `UUID`  
@@ -1121,7 +1120,7 @@ Font case transformation for master data API calls (`UPPER`, `LOWER`, etc.).
 
 ## Localization
 
-Properties for multi-language support. See [Localization](concepts/localization).
+Properties for multi-language support. See [Localization](concepts/localization.md).
 
 ### localisationMap
 **Type:** `Map<string, Map<string, Object>>`  
@@ -1177,7 +1176,7 @@ Translations for master data enum options.
 
 ## Auto-Generation
 
-Properties for automatic value generation. See [Auto-Generated IDs](recipes/auto-generated-ids).
+Properties for automatic value generation. See [Auto-Generated IDs](recipes/auto-generated-ids.md).
 
 ### autoGenerate
 **Type:** `boolean`  
@@ -1216,7 +1215,7 @@ Configuration for auto-generated values.
 
 ## Display Configuration
 
-Visual styling objects. See [Field Appearance](concepts/field-appearance).
+Visual styling objects. See [Field Appearance](concepts/field-appearance.md).
 
 ### titleDisplayConfiguration
 **Type:** `FieldDisplayConfiguration`  
@@ -2276,7 +2275,7 @@ These properties exist on `FormSchema`, not on individual fields.
 | `initAccessMatrices` | AccessMatrix[] | Access for new submissions |
 | `updateAccessMatrices` | AccessMatrix[] | Access for editing |
 
-See [Visibility & Access](concepts/visibility-access) for details.
+See [Visibility & Access](concepts/visibility-access.md) for details.
 
 ---
 
@@ -2316,7 +2315,7 @@ Detailed reference for complex nested objects.
 
 ## AccessMatrix Object
 
-Controls field-level access and visibility. See [Visibility & Access](concepts/visibility-access).
+Controls field-level access and visibility. See [Visibility & Access](concepts/visibility-access.md).
 
 | Property | Type | Values | Purpose |
 |----------|------|--------|---------|
@@ -2348,7 +2347,7 @@ Controls field-level access and visibility. See [Visibility & Access](concepts/v
 
 ## Predicate Object
 
-Conditional rules for dynamic behavior. See [Conditional Logic](concepts/conditional-logic).
+Conditional rules for dynamic behavior. See [Conditional Logic](concepts/conditional-logic.md).
 
 | Property | Type | Purpose |
 |----------|------|---------|
@@ -2392,7 +2391,7 @@ Conditional rules for dynamic behavior. See [Conditional Logic](concepts/conditi
 
 ## FieldDisplayConfiguration Object
 
-Visual styling configuration. See [Field Appearance](concepts/field-appearance).
+Visual styling configuration. See [Field Appearance](concepts/field-appearance.md).
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -2434,13 +2433,13 @@ Visual styling configuration. See [Field Appearance](concepts/field-appearance).
 | Hide a field | `accessMatrix.visibility: "GONE"` | [Access Control](#accessmatrix) |
 | Show default value | `accessMatrix.answer` | [Access Control](#accessmatrix) |
 | Calculate value | `predicates` with `CALC` | [Predicates](#predicates) |
-| Filter dropdown options | `predicates` with `OPTION_FILTER` | [Master Data](concepts/master-data) |
+| Filter dropdown options | `predicates` with `OPTION_FILTER` | [Master Data](concepts/master-data.md) |
 | Limit date range | `minimum`, `maximum`, `timeUnit` | [DateTime](#timestamp--date--time) |
 | Restrict file size | `maxSize` | [Validation](#maxsize) |
 | Allow multiple selections | `type: "array"` | [Selection](#string_list-selection-fields) |
 | Create repeating rows | `type: "array"` + `items` | [Section](#section-objectarray-containers) |
 | Add translations | `localisationMap` | [Localization](#localisationmap) |
-| Connect to master data | `masterId`, `columnKey` | [Master Data](concepts/master-data) |
+| Connect to master data | `masterId`, `columnKey` | [Master Data](concepts/master-data.md) |
 | Auto-generate ID | `autoGenerate`, `autoGenerateConfig` | [Auto-Generation](#auto-generation) |
 | Capture location | `description: "location"` | [Location](#location) |
 | Upload files | `description: "multimedia"` | [Multimedia](#multimedia-imagevideoaudiodocument) |
@@ -2452,11 +2451,11 @@ Visual styling configuration. See [Field Appearance](concepts/field-appearance).
 
 ## See Also
 
-- [Field Types Reference](field-types/README) - Detailed field type documentation
-- [Field Appearance](concepts/field-appearance) - Visual customization guide
-- [Conditional Logic](concepts/conditional-logic) - Predicates deep dive
-- [Visibility & Access](concepts/visibility-access) - AccessMatrix details
-- [Master Data](concepts/master-data) - External data sources
-- [Localization](concepts/localization) - Multi-language support
-- [Calculated Fields](recipes/calculated-field) - CALC predicate examples
-- [Auto-Generated IDs](recipes/auto-generated-ids) - Auto-generation patterns
+- [Field Types Reference](field-types/README.md) - Detailed field type documentation
+- [Field Appearance](concepts/field-appearance.md) - Visual customization guide
+- [Conditional Logic](concepts/conditional-logic.md) - Predicates deep dive
+- [Visibility & Access](concepts/visibility-access.md) - AccessMatrix details
+- [Master Data](concepts/master-data.md) - External data sources
+- [Localization](concepts/localization.md) - Multi-language support
+- [Calculated Fields](recipes/calculated-field.md) - CALC predicate examples
+- [Auto-Generated IDs](recipes/auto-generated-ids.md) - Auto-generation patterns

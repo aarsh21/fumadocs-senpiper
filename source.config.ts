@@ -1,4 +1,5 @@
 import { defineConfig, defineDocs, frontmatterSchema, metaSchema } from 'fumadocs-mdx/config';
+import { rehypeCodeDefaultOptions } from 'fumadocs-core/mdx-plugins';
 
 export const docs = defineDocs({
   dir: 'content/docs',
@@ -14,5 +15,13 @@ export const docs = defineDocs({
 });
 
 export default defineConfig({
-  mdxOptions: {},
+  mdxOptions: {
+    rehypeCodeOptions: {
+      themes: {
+        light: 'vesper',
+        dark: 'vesper',
+      },
+      transformers: [...(rehypeCodeDefaultOptions.transformers ?? [])],
+    },
+  },
 });
