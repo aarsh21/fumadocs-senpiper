@@ -3,38 +3,27 @@
 # For npm/pnpm or yarn, refer to the Dockerfile instead
 # -----------------------------------------------------------------------------
 
-# Use Bun's official image
 FROM oven/bun:1 AS base
 
 WORKDIR /app
 
-# Install dependencies with bun
 FROM base AS deps
 COPY package.json bun.lock* ./
-# Skip postinstall (fumadocs-mdx needs source.config.ts which isn't copied yet)
 RUN bun install --no-save --frozen-lockfile --ignore-scripts
 
-# Rebuild the source code only when needed
+FROM base AS opencode-deps
+RUN bun install -g opencode-ai
+
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun run postinstall
 RUN cd .opencode && bun install --frozen-lockfile
-
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
-# ENV NEXT_TELEMETRY_DISABLED=1
-
 RUN bun run build
 
-# Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
-
-# Uncomment the following line in case you want to disable telemetry during runtime.
-# ENV NEXT_TELEMETRY_DISABLED=1
 
 ENV NODE_ENV=production \
   PORT=3000 \
@@ -43,12 +32,10 @@ ENV NODE_ENV=production \
 RUN groupadd --system --gid 1001 nodejs && \
   useradd --system --uid 1001 --no-log-init -g nodejs nextjs
 
-RUN bun install -g opencode-ai
+COPY --from=opencode-deps /root/.bun/install/global/node_modules /usr/local/lib/opencode
+COPY --from=opencode-deps /root/.bun/bin/opencode /usr/local/bin/opencode
 
 COPY --from=builder /app/public ./public
-
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/.opencode ./.opencode
