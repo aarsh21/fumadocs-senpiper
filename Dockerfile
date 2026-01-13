@@ -26,6 +26,8 @@ ENV NODE_ENV=production \
   PORT=3000 \
   HOSTNAME="0.0.0.0"
 
+RUN apk add --no-cache ripgrep
+
 RUN addgroup -S -g 1001 nodejs && \
   adduser -S -u 1001 -G nodejs nextjs
 
