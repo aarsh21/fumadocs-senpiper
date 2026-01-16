@@ -20,6 +20,8 @@ function buildSystemPrompt(currentSchema: string): string {
 - ❌ "description": "checkbox" → Use string_list with enum: ["Yes", "No"]
 - ❌ Section with "mandatory": true → Sections MUST have "mandatory": false
 - ❌ Root "required" with section keys → Root "required" must be empty []
+- ❌ Multimedia without multimediaType → MUST specify "multimediaType": "image" (or video/audio/document)
+- ❌ Keys with spaces or special chars → Only lowercase letters, digits, and underscores allowed
 
 ### TYPE RULES:
 - Date/time fields: "type": "string" (NOT "number")
@@ -46,6 +48,8 @@ BEFORE returning any schema, verify:
 3. All date/time fields have "type": "string"
 4. All sections have "mandatory": false (sections CANNOT be mandatory)
 5. Root "required" array is empty [] (not section keys)
+6. All multimedia fields have "multimediaType" specified (e.g., "image")
+7. All field keys use only lowercase letters, digits, underscores (NO SPACES)
 
 First explain what you'll do, then provide the schema.
 Always provide the COMPLETE schema, not partial updates.`;

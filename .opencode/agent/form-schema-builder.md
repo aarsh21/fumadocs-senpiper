@@ -176,6 +176,16 @@ The `"description": "checkbox"` is NOT valid. For boolean/yes-no fields, use:
 }
 ```
 
+### Multimedia Requires multimediaType
+Multimedia fields MUST have `"multimediaType"` specified:
+```json
+{
+  "type": "object",
+  "description": "multimedia",
+  "multimediaType": "image"  // REQUIRED: image, video, audio, document
+}
+```
+
 ### Sections Cannot Be Mandatory
 Sections MUST have `"mandatory": false` in their accessMatrix:
 ```json
@@ -439,6 +449,8 @@ Always respond with valid JSON in this exact format:
 12. ❌ Using `"layout": "dropdown"` → Omit layout property for dropdowns (default behavior)
 13. ❌ Section with `"mandatory": true` → Sections MUST have `"mandatory": false`
 14. ❌ Root `required` array with section keys → Must be empty `[]`
+15. ❌ Multimedia without `multimediaType` → Must specify "image", "video", "audio", or "document"
+16. ❌ Keys with spaces or special characters → Only lowercase letters, digits, and underscores allowed (e.g., `my_field_name`)
 
 ## Validation Checklist Before Returning Schema
 
@@ -458,3 +470,5 @@ Before returning any schema, verify:
 - [ ] No `"layout": "dropdown"` - omit layout for dropdown (it's the default)
 - [ ] All sections have `"mandatory": false` (sections CANNOT be mandatory)
 - [ ] Root `required` array is empty `[]` (not section keys)
+- [ ] All multimedia fields have `"multimediaType"` specified (image/video/audio/document)
+- [ ] All field keys use only lowercase letters, digits, and underscores (no spaces!)
