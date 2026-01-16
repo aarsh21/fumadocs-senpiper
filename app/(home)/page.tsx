@@ -13,7 +13,7 @@ export default function HomePage() {
       >
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 rounded-lg bg-fd-primary/10 text-fd-primary">
-            <Sparkles className="size-5" />
+            <Sparkles className="size-5" aria-hidden="true" />
           </div>
           <span className="font-semibold text-lg">AI Form Schema Builder</span>
         </div>

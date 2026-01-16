@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { docs } from 'fumadocs-mdx:collections/server';
 import { type InferPageType, loader } from 'fumadocs-core/source';
 import { lucideIconsPlugin } from 'fumadocs-core/source/lucide-icons';
@@ -12,8 +13,9 @@ export const source = loader({
 /**
  * Generate a URL map of all documentation pages for AI context.
  * Returns a formatted string listing all pages with their titles and URLs.
+ * Cached per-request to avoid redundant computation.
  */
-export function getDocumentationUrlMap(): string {
+export const getDocumentationUrlMap = cache((): string => {
   const pages = source.getPages();
   
   const entries = pages.map((page) => {
@@ -22,7 +24,7 @@ export function getDocumentationUrlMap(): string {
   });
 
   return entries.join('\n');
-}
+});
 
 export function getPageImage(page: InferPageType<typeof source>) {
   const segments = [...page.slugs, 'image.png'];

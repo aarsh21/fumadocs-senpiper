@@ -23,13 +23,13 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production \
-  PORT=3000 \
-  HOSTNAME="0.0.0.0"
+    PORT=3000 \
+    HOSTNAME="0.0.0.0"
 
 RUN apk add --no-cache ripgrep
 
 RUN addgroup -S -g 1001 nodejs && \
-  adduser -S -u 1001 -G nodejs nextjs
+    adduser -S -u 1001 -G nodejs nextjs
 
 COPY --from=ghcr.io/anomalyco/opencode /usr/local/bin/opencode /usr/local/bin/opencode
 RUN chmod +x /usr/local/bin/opencode

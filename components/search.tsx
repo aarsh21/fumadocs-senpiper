@@ -55,7 +55,6 @@ function Header() {
       </div>
       <button
         aria-label="Close"
-        tabIndex={-1}
         className={cn(
           buttonVariants({
             size: "icon-sm",
@@ -65,7 +64,7 @@ function Header() {
         )}
         onClick={() => setOpen(false)}
       >
-        <X />
+        <X aria-hidden="true" />
       </button>
     </div>
   );
@@ -91,7 +90,7 @@ function SearchAIActions() {
           )}
           onClick={() => regenerate()}
         >
-          <RefreshCw className="size-4" />
+          <RefreshCw className="size-4" aria-hidden="true" />
           Retry
         </button>
       )}
@@ -132,8 +131,9 @@ function SearchAIInput(props: ComponentProps<"form">) {
     >
       <Input
         value={input}
-        placeholder={isLoading ? "AI is answering..." : "Ask a question"}
+        placeholder={isLoading ? "AI is answering…" : "Ask a question…"}
         autoFocus
+        aria-label="Ask AI a question"
         className="p-3"
         disabled={isLoading}
         onChange={(e) => setInput(e.target.value)}
@@ -148,6 +148,7 @@ function SearchAIInput(props: ComponentProps<"form">) {
         <button
           key="stop"
           type="button"
+          aria-label="Stop AI response"
           className={cn(
             buttonVariants({
               variant: "secondary",
@@ -156,13 +157,14 @@ function SearchAIInput(props: ComponentProps<"form">) {
           )}
           onClick={stop}
         >
-          <Loader2 className="size-4 animate-spin text-fd-muted-foreground" />
+          <Loader2 className="size-4 animate-spin text-fd-muted-foreground" aria-hidden="true" />
           Stop
         </button>
       ) : (
         <button
           key="submit"
           type="submit"
+          aria-label="Send message"
           className={cn(
             buttonVariants({
               variant: "secondary",
@@ -171,7 +173,7 @@ function SearchAIInput(props: ComponentProps<"form">) {
           )}
           disabled={input.length === 0}
         >
-          <Send className="size-4" />
+          <Send className="size-4" aria-hidden="true" />
         </button>
       )}
     </form>
@@ -356,7 +358,7 @@ export function AISearchTrigger() {
       )}
       onClick={() => setOpen(true)}
     >
-      <MessageCircleIcon className="size-4" />
+      <MessageCircleIcon className="size-4" aria-hidden="true" />
       Ask AI
     </button>
   );

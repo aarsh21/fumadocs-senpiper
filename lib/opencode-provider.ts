@@ -28,5 +28,24 @@ export const opencode = createOpencode({
   },
 });
 
+// Form Schema Builder provider - specialized for form DSL generation
+export const formSchemaOpencode = createOpencode({
+  hostname: OPENCODE_HOSTNAME,
+  port: OPENCODE_PORT,
+  autoStartServer: false,
+  defaultSettings: {
+    agent: "form-schema-builder",
+    cwd: OPENCODE_DOCS_DIR,
+    sessionTitle: "Form Schema Builder",
+    tools: {
+      Grep: true,
+      Read: true,
+      Glob: true,
+      Bash: false,
+      Write: false,
+    },
+  },
+});
+
 export const DEFAULT_MODEL_ID =
   process.env.OPENCODE_MODEL_ID || "opencode/minimax-m2.1-free";

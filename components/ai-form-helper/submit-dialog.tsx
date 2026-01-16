@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Trash2 } from "lucide-react";
 
 interface SubmitDialogProps {
   open: boolean;
@@ -22,46 +22,90 @@ interface SubmitDialogProps {
 
 type SubmitStatus = "idle" | "loading" | "success" | "error";
 
+const STORAGE_KEY = "form-submit-config";
+
+interface SavedConfig {
+  baseUrl: string;
+  companyId: string;
+  groupId: string;
+  authToken: string;
+}
+
+const DEFAULT_BASE_URL = "https://profiletesting.staging.senpiper.com";
+
 export function SubmitDialog({
   open,
   onOpenChange,
   schema,
 }: SubmitDialogProps) {
   const [groupId, setGroupId] = useState("");
+  const [companyId, setCompanyId] = useState("");
   const [authToken, setAuthToken] = useState("");
-  const [apiUrl, setApiUrl] = useState(
-    "https://profiletesting.staging.senpiper.com/api/core/form",
-  );
+  const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE_URL);
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const config: SavedConfig = JSON.parse(saved);
+        setBaseUrl(config.baseUrl || DEFAULT_BASE_URL);
+        setCompanyId(config.companyId || "");
+        setGroupId(config.groupId || "");
+        setAuthToken(config.authToken || "");
+      }
+    } catch {
+      /* empty */
+    }
+  }, []);
+
+  useEffect(() => {
+    const config: SavedConfig = { baseUrl, companyId, groupId, authToken };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+  }, [baseUrl, companyId, groupId, authToken]);
+
+  const handleClear = () => {
+    setBaseUrl(DEFAULT_BASE_URL);
+    setCompanyId("");
+    setGroupId("");
+    setAuthToken("");
+    localStorage.removeItem(STORAGE_KEY);
+  };
+
   const handleSubmit = async () => {
-    if (!groupId || !authToken) return;
+    if (!groupId || !companyId || !authToken) return;
 
     setStatus("loading");
     setErrorMessage("");
 
     try {
       const parsedSchema = JSON.parse(schema);
-      const payload = {
-        ...parsedSchema,
-        groupId,
-      };
 
-      const response = await fetch(apiUrl, {
+      // Use our proxy API to avoid CORS issues
+      const response = await fetch("/api/form-submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          auth: authToken,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          baseUrl,
+          groupId,
+          companyId,
+          authToken,
+          schema: parsedSchema,
+        }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(errorData || `HTTP ${response.status}`);
+      const jsonResponse = await response.json();
+      
+      if (jsonResponse.status !== 0) {
+        // API returned an error (status !== 0 means error)
+        const errorMsg = jsonResponse.message || `API Error: ${jsonResponse.status}`;
+        throw new Error(errorMsg);
       }
-
+      
+      // Success case
       setStatus("success");
     } catch (error) {
       setStatus("error");
@@ -91,15 +135,19 @@ export function SubmitDialog({
 
         {status === "success" ? (
           <div className="flex flex-col items-center gap-3 py-6">
-            <CheckCircle2 className="h-12 w-12 text-green-500" />
+            <CheckCircle2 className="h-12 w-12 text-green-500" aria-hidden="true" />
             <p className="text-lg font-medium">Form submitted successfully!</p>
             <Button onClick={handleClose}>Close</Button>
           </div>
         ) : status === "error" ? (
           <div className="flex flex-col items-center gap-3 py-6">
-            <XCircle className="h-12 w-12 text-red-500" />
+            <XCircle className="h-12 w-12 text-red-500 shrink-0" aria-hidden="true" />
             <p className="text-lg font-medium">Submission failed</p>
-            <p className="text-sm text-fd-muted-foreground">{errorMessage}</p>
+            <div className="w-full max-h-48 overflow-y-auto rounded-md bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 p-3">
+              <p className="text-sm text-red-700 dark:text-red-300 whitespace-pre-wrap break-words">
+                {errorMessage}
+              </p>
+            </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStatus("idle")}>
                 Try Again
@@ -111,12 +159,21 @@ export function SubmitDialog({
           <>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="apiUrl">API URL</Label>
+                <Label htmlFor="apiUrl">Base URL</Label>
                 <Input
                   id="apiUrl"
-                  value={apiUrl}
-                  onChange={(e) => setApiUrl(e.target.value)}
-                  placeholder="https://..."
+                  value={baseUrl}
+                  onChange={(e) => setBaseUrl(e.target.value)}
+                  placeholder="https://…"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="companyId">Company ID</Label>
+                <Input
+                  id="companyId"
+                  value={companyId}
+                  onChange={(e) => setCompanyId(e.target.value)}
+                  placeholder="Enter company ID…"
                 />
               </div>
               <div className="grid gap-2">
@@ -125,7 +182,7 @@ export function SubmitDialog({
                   id="groupId"
                   value={groupId}
                   onChange={(e) => setGroupId(e.target.value)}
-                  placeholder="Enter group ID"
+                  placeholder="Enter group ID…"
                 />
               </div>
               <div className="grid gap-2">
@@ -135,22 +192,32 @@ export function SubmitDialog({
                   type="password"
                   value={authToken}
                   onChange={(e) => setAuthToken(e.target.value)}
-                  placeholder="Enter auth token"
+                  placeholder="Enter auth token…"
                 />
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button
+                variant="ghost"
+                onClick={handleClear}
+                className="sm:mr-auto text-fd-muted-foreground"
+              >
+                <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
+                Clear All
+              </Button>
               <Button variant="outline" onClick={handleClose}>
                 Cancel
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={!groupId || !authToken || status === "loading"}
+                disabled={
+                  !groupId || !companyId || !authToken || status === "loading"
+                }
               >
                 {status === "loading" ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Submitting...
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                    Submitting…
                   </>
                 ) : (
                   "Submit"

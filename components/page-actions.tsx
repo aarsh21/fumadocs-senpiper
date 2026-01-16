@@ -196,7 +196,7 @@ export function ViewOptions({
         href: `https://t3.chat/new?${new URLSearchParams({
           q,
         })}`,
-        icon: <MessageCircleIcon />,
+        icon: <MessageCircleIcon aria-hidden="true" />,
       },
     ];
   }, [githubUrl, markdownUrl]);

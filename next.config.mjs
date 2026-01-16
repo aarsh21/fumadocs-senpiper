@@ -6,6 +6,9 @@ const withMDX = createMDX();
 const config = {
   reactStrictMode: true,
   output: 'standalone',
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
 };
 
 export default withMDX(config);

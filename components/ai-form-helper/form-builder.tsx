@@ -22,7 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RotateCcw, Send, AlertCircle, CheckCircle2, ArrowLeft, FlaskConical } from "lucide-react";
+import {
+  RotateCcw,
+  Send,
+  AlertCircle,
+  CheckCircle2,
+  ArrowLeft,
+  FlaskConical,
+} from "lucide-react";
 import Link from "next/link";
 
 export function FormBuilder() {
@@ -56,7 +63,7 @@ export function FormBuilder() {
   if (!isInitialized) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-fd-muted-foreground">Loading...</div>
+        <div className="text-fd-muted-foreground">Loading…</div>
       </div>
     );
   }
@@ -65,11 +72,11 @@ export function FormBuilder() {
     <div className="flex h-screen flex-col">
       <header className="flex items-center justify-between border-b bg-fd-background px-4 py-3">
         <div className="flex items-center gap-4">
-          <Link 
-            href="/docs" 
+          <Link
+            href="/docs"
             className="flex items-center gap-1.5 text-sm text-fd-muted-foreground hover:text-fd-foreground transition-colors"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Back to Docs</span>
           </Link>
           <div className="h-5 w-px bg-fd-border hidden sm:block" />
@@ -95,7 +102,7 @@ export function FormBuilder() {
             </SelectContent>
           </Select>
           <Button variant="outline" size="sm" onClick={resetSchema}>
-            <RotateCcw className="mr-2 h-4 w-4" />
+            <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
             Reset
           </Button>
         </div>
@@ -103,18 +110,18 @@ export function FormBuilder() {
           <div className="flex items-center gap-2 text-sm">
             {isValid ? (
               <>
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <CheckCircle2 className="h-4 w-4 text-green-500" aria-hidden="true" />
                 <span className="text-fd-muted-foreground">Valid JSON</span>
               </>
             ) : (
               <>
-                <AlertCircle className="h-4 w-4 text-red-500" />
+                <AlertCircle className="h-4 w-4 text-red-500" aria-hidden="true" />
                 <span className="text-red-500">{errors[0]}</span>
               </>
             )}
           </div>
           <Button onClick={() => setSubmitOpen(true)} disabled={!isValid}>
-            <Send className="mr-2 h-4 w-4" />
+            <Send className="mr-2 h-4 w-4" aria-hidden="true" />
             Submit to Server
           </Button>
         </div>
@@ -143,13 +150,18 @@ export function FormBuilder() {
         <DialogContent showCloseButton={false}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FlaskConical className="h-5 w-5 text-amber-500" />
+              <FlaskConical className="h-5 w-5 text-amber-500" aria-hidden="true" />
               Alpha Preview
             </DialogTitle>
             <DialogDescription className="text-left pt-2">
-              This feature is currently in <span className="font-semibold text-amber-500">very early alpha</span> stage. 
-              You may encounter bugs, incomplete features, or unexpected behavior.
-              <br /><br />
+              This feature is currently in{" "}
+              <span className="font-semibold text-amber-500">
+                very early alpha
+              </span>{" "}
+              stage. You may encounter bugs, incomplete features, or unexpected
+              behavior.
+              <br />
+              <br />
               Your feedback is valuable! Please report any issues you encounter.
             </DialogDescription>
           </DialogHeader>
