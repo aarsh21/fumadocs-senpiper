@@ -1,7 +1,7 @@
 ---
 description: Fast documentation assistant for Senpiper docs site
 mode: primary
-model: opencode/minimax-m2.1-free
+model: opencode/kimi-k2.5-free
 temperature: 0
 maxSteps: 3
 tools:

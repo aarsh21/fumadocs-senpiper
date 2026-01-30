@@ -1,7 +1,7 @@
 ---
 description: Expert form schema builder for Senpiper V1 Form Schema DSL
 mode: primary
-model: opencode/minimax-m2.1-free
+model: opencode/kimi-k2.5-free
 temperature: 0.1
 maxSteps: 10
 tools:
